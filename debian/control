@@ -10,4 +10,11 @@ Package: rogueportal
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, bridge-utils, dnsmasq, hostapd, iptables-persistent, macchanger, nginx
 Description: Rogue Portal
- A rogue portal configuration for Raspbian
+ A configuration package that configures a system as a rogue captive portal.
+
+Package: roguefastboot
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Rogue Portal Fast Boot
+ A configuration package that configures a system to boot faster for a rogue
+ captive portal by disabling unneeded services.

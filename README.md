@@ -13,7 +13,7 @@ Build with (the parentheses spawn a subshell so that the directory change is tem
 
 Install with (choose "yes" for any yes/no questions):
 ```bash
-sudo apt install ./rogueportal*.deb
+sudo apt install ./rogue*.deb
 ```
 
 Reboot to activate Rogue Captive Portal
@@ -23,5 +23,5 @@ sudo reboot
 
 Remove with:
 ```bash
-sudo apt remove rogueportal && sudo apt autoremove
+sudo apt remove rogueportal roguefastboot && sudo apt autoremove
 ```
