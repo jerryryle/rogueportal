@@ -1,0 +1,6 @@
+auto br0
+iface br0 inet static
+    address 10.1.1.1
+    netmask 255.255.255.0
+    pre-up brctl addbr br0
+    post-down btctl delbr br0

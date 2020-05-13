@@ -1,0 +1,39 @@
+# Default server configuration
+#
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    # Only allow GET, HEAD, POST
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+
+    # Logs
+    access_log /var/log/nginx/rogueportal.access.log;
+    error_log /var/log/nginx/rogueportal.error.log warn;
+
+    root /var/www/html;
+
+    index index.html;
+
+    server_name _;
+
+    # Handle iOS
+    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
+        return 302 http://$host/letsconnect;
+    }
+
+    # Default redirect for any unexpected content to trigger captive portal
+    # sign in screen on device.
+    location / {
+        return 302 http://$host/letsconnect;
+    }
+
+    location /letsconnect {
+        # First attempt to serve request as file, then
+        # as directory, then fall back to displaying a 404.
+        try_files $uri $uri/ =404;
+    }
+
+    # Redirect these errors to the home page.
+    error_page 401 403 404 =200 /letsconnect/index.html;
+}

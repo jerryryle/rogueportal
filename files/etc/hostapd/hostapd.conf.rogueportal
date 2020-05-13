@@ -1,0 +1,136 @@
+# AP netdevice name (without 'ap' postfix, i.e., wlan0 uses wlan0ap for
+# management frames with the Host AP driver); wlan0 with many nl80211 drivers
+# Note: This attribute can be overridden by the values supplied with the '-i'
+# command line parameter.
+interface=wlan0
+
+# In case of atheros and nl80211 driver interfaces, an additional
+# configuration parameter, bridge, may be used to notify hostapd if the
+# interface is included in a bridge. This parameter is not used with Host AP
+# driver. If the bridge parameter is not set, the drivers will automatically
+# figure out the bridge interface (assuming sysfs is enabled and mounted to
+# /sys) and this parameter may not be needed.
+#
+# For nl80211, this parameter can be used to request the AP interface to be
+# added to the bridge automatically (brctl may refuse to do this before hostapd
+# has been started to change the interface mode). If needed, the bridge
+# interface is also created.
+bridge=br0
+
+# Interface for separate control program. If this is specified, hostapd
+# will create this directory and a UNIX domain socket for listening to requests
+# from external programs (CLI/GUI, etc.) for status information and
+# configuration. The socket file will be named based on the interface name, so
+# multiple hostapd processes/interfaces can be run at the same time if more
+# than one interface is used.
+# /var/run/hostapd is the recommended directory for sockets and by default,
+# hostapd_cli will use it when trying to connect with hostapd.
+ctrl_interface=/var/run/hostapd
+
+# Access control for the control interface can be configured by setting the
+# directory to allow only members of a group to use sockets. This way, it is
+# possible to run hostapd as root (since it needs to change network
+# configuration and open raw sockets) and still allow GUI/CLI components to be
+# run as non-root users. However, since the control interface can be used to
+# change the network configuration, this access needs to be protected in many
+# cases. By default, hostapd is configured to use gid 0 (root). If you
+# want to allow non-root users to use the contron interface, add a new group
+# and change this value to match with that group. Add users that should have
+# control interface access to this group.
+#
+# This variable can be a group name or gid.
+#ctrl_interface_group=wheel
+ctrl_interface_group=0
+
+##### IEEE 802.11 related configuration #######################################
+
+# SSID to be used in IEEE 802.11 management frames
+ssid=[Your SSID]
+
+# Operation mode (a = IEEE 802.11a (5 GHz), b = IEEE 802.11b (2.4 GHz),
+# g = IEEE 802.11g (2.4 GHz), ad = IEEE 802.11ad (60 GHz); a/g options are used
+# with IEEE 802.11n (HT), too, to specify band). For IEEE 802.11ac (VHT), this
+# needs to be set to hw_mode=a. When using ACS (see channel parameter), a
+# special value "any" can be used to indicate that any support band can be used.
+# This special case is currently supported only with drivers with which
+# offloaded ACS is used.
+# Default: IEEE 802.11b
+hw_mode=g
+
+# Channel number (IEEE 802.11)
+# (default: 0, i.e., not set)
+# Please note that some drivers do not use this value from hostapd and the
+# channel will need to be configured separately with iwconfig.
+#
+# If CONFIG_ACS build option is enabled, the channel can be selected
+# automatically at run time by setting channel=acs_survey or channel=0, both of
+# which will enable the ACS survey based algorithm.
+channel=6
+
+# Beacon interval in kus (1.024 ms) (default: 100; range 15..65535)
+beacon_int=100
+
+# DTIM (delivery traffic information message) period (range 1..255):
+# number of beacons between DTIMs (1 = every beacon includes DTIM element)
+# (default: 2)
+dtim_period=2
+
+# Maximum number of stations allowed in station table. New stations will be
+# rejected after the station table is full. IEEE 802.11 has a limit of 2007
+# different association IDs, so this number should not be larger than that.
+# (default: 2007)
+max_num_sta=255
+
+# RTS/CTS threshold; -1 = disabled (default); range -1..65535
+# If this field is not included in hostapd.conf, hostapd will not control
+# RTS threshold and 'iwconfig wlan# rts <val>' can be used to set it.
+rts_threshold=-1
+
+# Fragmentation threshold; -1 = disabled (default); range -1, 256..2346
+# If this field is not included in hostapd.conf, hostapd will not control
+# fragmentation threshold and 'iwconfig wlan# frag <val>' can be used to set
+# it.
+fragm_threshold=-1
+
+# Station MAC address -based authentication
+# Please note that this kind of access control requires a driver that uses
+# hostapd to take care of management frame processing and as such, this can be
+# used with driver=hostap or driver=nl80211, but not with driver=atheros.
+# 0 = accept unless in deny list
+# 1 = deny unless in accept list
+# 2 = use external RADIUS server (accept/deny lists are searched first)
+macaddr_acl=0
+
+# IEEE 802.11 specifies two authentication algorithms. hostapd can be
+# configured to allow both of these or only one. Open system authentication
+# should be used with IEEE 802.1X.
+# Bit fields of allowed authentication algorithms:
+# bit 0 = Open System Authentication
+# bit 1 = Shared Key Authentication (requires WEP)
+auth_algs=1
+
+# Send empty SSID in beacons and ignore probe request frames that do not
+# specify full SSID, i.e., require stations to know SSID.
+# default: disabled (0)
+# 1 = send empty (length=0) SSID in beacon and ignore probe request for
+#     broadcast SSID
+# 2 = clear SSID (ASCII 0), but keep the original length (this may be required
+#     with some clients that do not support empty SSID) and ignore probe
+#     requests for broadcast SSID
+ignore_broadcast_ssid=0
+
+
+# Default WMM parameters (IEEE 802.11 draft; 11-03-0504-03-000e):
+# for 802.11a or 802.11g networks
+# These parameters are sent to WMM clients when they associate.
+# The parameters will be used by WMM clients for frames transmitted to the
+# access point.
+#
+# note - txop_limit is in units of 32microseconds
+# note - acm is admission control mandatory flag. 0 = admission control not
+# required, 1 = mandatory
+# note - Here cwMin and cmMax are in exponent form. The actual cw value used
+# will be (2^n)-1 where n is the value given here. The allowed range for these
+# wmm_ac_??_{cwmin,cwmax} is 0..15 with cwmax >= cwmin.
+#
+wmm_enabled=0

@@ -1,0 +1,7 @@
+/etc/dnsmasq.conf.rogueportal
+/etc/sysctl.conf.rogueportal
+/etc/hostapd/hostapd.conf.rogueportal
+/etc/iptables/rules.v4.rogueportal
+/etc/wpa_supplicant/wpa_supplicant.conf.rogueportal
+/etc/nginx/nginx.conf.rogueportal
+/etc/nginx/sites-available/default.rogueportal

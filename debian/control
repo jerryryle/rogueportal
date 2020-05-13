@@ -1,0 +1,13 @@
+Source: rogueportal
+Section: config
+Priority: optional
+Maintainer: Jerry Ryle <jerryryle@gmail.com>
+Build-Depends: debhelper (>= 11), config-package-dev (>= 5.5~)
+Standards-Version: 4.1.3
+Homepage: https://github.com/jerryryle/rogueportal
+
+Package: rogueportal
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, bridge-utils, dnsmasq, hostapd, iptables-persistent, macchanger, nginx
+Description: Rogue Portal
+ A rogue portal configuration for Raspbian
