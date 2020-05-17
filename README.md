@@ -1,9 +1,11 @@
 # rogueportal
 Rogue Captive Portal using a Raspberry Pi Zero W
 
+First, get a stock Raspbian Buster Lite image up, on the network, and upgraded.
+
 Install build prerequisites:
 ```bash
-sudo apt-get install debhelper config-package-dev
+sudo apt install debhelper config-package-dev
 ```
 
 Build with (the parentheses spawn a subshell so that the directory change is temporary):
@@ -23,5 +25,10 @@ sudo reboot
 
 Remove with:
 ```bash
-sudo apt remove rogueportal roguefastboot && sudo apt autoremove
+sudo apt remove rogueportal roguefastboot --purge
+```
+
+Optionally remove the installed dependencies with:
+```bash
+sudo apt autoremove
 ```

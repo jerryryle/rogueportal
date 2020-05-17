@@ -8,7 +8,7 @@ Homepage: https://github.com/jerryryle/rogueportal
 
 Package: rogueportal
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, bridge-utils, dnsmasq, hostapd, iptables-persistent, macchanger, nginx
+Depends: ${shlibs:Depends}, ${misc:Depends}, bridge-utils, dnsmasq, iptables-persistent, macchanger, nginx
 Description: Rogue Portal
  A configuration package that configures a system as a rogue captive portal.
 

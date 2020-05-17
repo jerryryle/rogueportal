@@ -21,8 +21,6 @@ case "$1" in
     remove|upgrade|deconfigure)
 		systemctl disable dnsmasq
 
-		systemctl disable hostapd
-		systemctl mask hostapd
     ;;
 
     failed-upgrade)
