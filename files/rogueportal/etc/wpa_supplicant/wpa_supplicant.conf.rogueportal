@@ -1,3 +1,10 @@
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=US
+
+network={
+	ssid="[Your SSID Here]"
+	mode=2
+	key_mgmt=NONE
+	frequency=2412
+}

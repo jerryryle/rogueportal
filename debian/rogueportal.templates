@@ -5,5 +5,3 @@ Default: Free WiFi
 Description: SSID for portal to broadcast
  This will be the SSID broadcast by this rogue captive portal. This is the
  name of the WiFi network that will be created.
- .
- You can change this later by editing /etc/hostapd/hostapd.conf
