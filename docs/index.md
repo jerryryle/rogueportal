@@ -1,0 +1,357 @@
+---
+title: "Rogue Captive Portal using a Raspberry Pi Zero W"
+---
+# Building a Rogue Captive Portal with the Raspberry Pi Zero W
+May 17, 2020 - This is a work in progress. The documentation is not complete.
+
+I previously created a "Rogue Access Point" ([see project here](https://jerryryle.github.io/rogue_ap/)) that made a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) act as a WiFi hotspot and serve up a Python web app to anyone who connected to it. That implementation specifically attempted to fool captive portal detection on devices so that they wouldn't pop up a captive portal connection dialog after connecting to the WiFi access point. It would then route all traffic to the Python web app so that when a user attempted to visit a website, for example http://google.com, they would see the app instead.
+
+That exercise was fun, but the push to use https everywhere detracted from its usefulness. Because the rogue access point can't have valid https certificates for most websites, the user is presented with a big security warning when they attempt to access any site via https. And, since many browsers now try https first, this makes the rogue access point useless (Hooray! The internet is getting better).
+
+So, I decided to create a "Rogue Captive Portal." This will intentionally not fool captive portal detection on devices so that they do pop up the captive portal connection dialog after connecting to the WiFi access point. This (currently) will happily show http content, so you're able to harass users with entertaining messages or present something that looks like a Google sign-in page to steal their credentials (but don't do that).
+
+I built upon the [Rogue Access Point](https://jerryryle.github.io/rogue_ap/) project, but made a few significant changes:
+
+1. I built a Debian package instead of a hackish install script.
+2. I figured out how to create the access point with [wpa_supplicant](https://w1.fi/wpa_supplicant/) instead of installing [hostapd](https://w1.fi/hostapd/).
+3. I used nginx instead of Apache and configure it only to serve static content. Serving a web app is left as an exercise for the reader.
+4. I created a "fast boot" package that makes a few tweaks to the Raspbian configuration to speed up the boot process. This is by no means comprehensive and could probably use more work to boot as fast as possible.
+
+## Preparation
+This section walks you through what you'll need to get an up-to-date copy of Raspbian running on your Raspberry Pi, along with a WiFi connection. You'll need this either to deploy the pre-built Debian packages or to do development.
+
+### Components
+
+You will need the following:
+
+* Raspberry Pi Zero W - though any Raspberry Pi model should work as long as it has a wireless adapter (built in or connected via USB)
+* Micro SD card - Use at least a 4GB class 10 card
+* HDMI cable and HDMI-compatible monitor or TV
+* USB OTG cable and 2A AC adapter for power
+* Keyboard and micro USB adapter or powered USB hub
+* WiFi
+* Computer with SD card reader to download Raspbian and install it onto the SD card
+* Computer or phone with WiFi to test the Rogue Portal
+
+### Create a Raspbian SD Card
+First, you need to get the Raspberry Pi up and running with the required packages. Download the latest image of Raspbian Buster Lite from [https://www.raspberrypi.org/downloads/raspbian/](https://www.raspberrypi.org/downloads/raspbian/)
+
+For writing the image to your SD card, get Etcher from [https://www.balena.io/etcher/](https://www.balena.io/etcher/).
+
+Insert the SD card in your computer and use Etcher to copy the Raspbian image to the SD card (it will overwrite any data currently on the card).
+
+![Etcher screenshot](etcher_screen_shot.png)
+
+When Etcher has finished copying the image, remove the SD card from your computer, plug it into the Raspberry Pi, connect a keyboard and monitor, and plug in the AC adapter. The system should boot to a login prompt. Log in using the default username `pi` and password `raspberry`.
+
+### Set up a WiFi connection for internet access
+In order to configure the device, you'll need to configure the Raspberry Pi to connect to your WiFi network. You can either run `sudo raspi-config` and configure your network from the GUI or do it manually with the following steps.
+
+Type this command to edit the wireless configuration:
+```bash
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+```
+
+To the end of the file, add the following lines, substituting the name of your local access point and its corresponding password:
+```text
+network={
+    ssid="WiFi Network"
+    psk="password"
+}
+```
+
+To save the file and exit, type `Ctrl-X`, then `y`, then `Enter`. Then, enter the following command to load the new network configuration:
+```bash
+sudo service networking restart
+```
+
+At this point, you might wish to enable ssh and perform as much of the the remaining configuration as possible over ssh. Setting this up is outside the scope of this document, but check out the "Interfacing Options" menu in the configuration tool invoked with `sudo raspi-config`.
+
+### Update Raspbian
+Next, update the system with the following command:
+```bash
+sudo apt-get update && sudo apt-get dist-upgrade -y
+```
+
+## Deploy the pre-built Debian packages
+This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
+
+
+
+## Build and Deploy the Debian packages from source
+This section will show you how to build the Debian packages from source and then deploy them. Use this method if you want to modify the packages for your own purpose--perhaps to change the configuration or include your own files.
+
+### Install additional dependencies
+
+Install the additional required packages:
+```bash
+sudo apt-get install git, debhelper, config-package-dev
+```
+
+Here's what you're installing and why:
+
+* **git** - This is needed to clone the repository that contains setup scripts and configuration files. (If you're planning to do all of the setup by hand, you don't need this)
+* **debhelper** - This includes tools for building Debian packages. You'll need this to build the Rogue Portal package.
+* **config-package-dev** - This includes tools that allow our Debian package to replace configuration files that were provided by other packages. These tools will allow us to easily revert the changes when our package is removed. You'll need this to build the Rogue Portal package.
+
+### Clone the Rogue Portal source
+
+Clone the Rogue Portal source repo. From your home folder:
+```bash
+git clone git@github.com:jerryryle/rogueportal.git
+```
+
+### Build the packages
+
+Still from your home folder, build with (the parentheses spawn a subshell so that the directory change is temporary):
+```bash
+(cd rogueportal && dpkg-buildpackage -uc -us)
+```
+
+### Install the packages
+
+This is the same as the install step in the previous section, so see that step for more details.
+
+Install the Rogue Portal and Fast Boot packages:
+```bash
+sudo apt install ./rogue*.deb
+```
+
+Reboot to activate the Rogue Portal
+```bash
+sudo reboot
+```
+
+Once you do this, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
+
+Remove the Rogue Portal with:
+```bash
+sudo apt remove rogueportal roguefastboot --purge
+```
+
+Then optionally remove the installed dependencies with:
+```bash
+sudo apt autoremove
+```
+
+## Manually create the Rogue Portal
+
+This section will show you how to manually configure Rasbian to be a Rogue Portal. It primarily serves to document the configuration.
+
+### Install additional dependencies
+
+Install the additional required packages:
+```bash
+sudo apt-get install bridge-utils, dnsmasq, iptables-persistent, macchanger, nginx
+```
+
+During the installation of the `iptables-persistent` package, you will be asked whether you'd like to save the current iptables rules. It will prompt you separately for both IPv4 and IPv6 rules. For each prompt, select 'Yes' with the arrow keys and press `Enter`:
+
+![iptables-persistent installation prompt IPv4](iptables-persistent-01.png)
+
+![iptables-persistent installation prompt IPv6](iptables-persistent-02.png)
+
+During the installation of the `macchanger` package, you will be asked whether you'd like `macchanger` to run automatically. Select 'Yes' with the arrow keys and press `Enter`:
+
+![macchanger installation prompt](macchanger.png)
+
+Here's what you're installing and why:
+
+* **bridge-utils** - Utilities for creating/configuring network bridge interfaces.
+* **dnsmasq** - This provides DNS and DHCP services. You'll configure this to hijack all DNS requests and give responses that direct browsers to your web server.
+* **iptables-persistent** - This allows you to store routing rules in a configuration file that is loaded upon startup. This prevents us from having to manually hack the rules into a startup script.
+* **macchanger** - This will randomly change your Raspberry Pi's WiFi MAC address. This makes it difficult for someone to track your Rogue AP or to blacklist it by its MAC address.
+* **nginx** - This is the web server that will serve up your content
+
+When the installation finishes, restart the Raspberry Pi:
+```bash
+sudo reboot
+```
+
+### Configure the Web Server to serve your content
+First, you'll want to install your html files and ensure they work under nginx.
+
+TODO: Explain nginx config files
+
+Your Raspberry Pi will lose internet access once you complete the rest of the steps, so it's worth ensuring that the web server is up and running first.
+
+### Configure wpa_supplicant to Create an Access Point
+Start by configuring wpa_supplicant to create a wireless access point. Use this command to edit the wpa_supplicant configuration file:
+```bash
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+```
+
+If you've configured Raspian for WiFi, you'll find your ssid and password in this file. Remove any existing content. Enter these lines:
+```text
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=US
+
+network={
+    ssid="[Your SSID Here]"
+    mode=2
+    key_mgmt=NONE
+    frequency=2412
+}
+```
+
+Replace "[Your SSID Here]" with the name of the access point you'd like to create. For example, if you'd like to create a network called "Angry Mule", you would use:
+```text
+    ssid="Angry Mule"
+```
+
+Save and exit (`CTRL-X`, 'Y').
+
+This configuration tells wpa_supplicant to create an access point (`mode=2`), with no encryption/security (`key_mgmt=NONE`), and with a frequency of 2412Hz (which is IEEE 802.11b/g channel 1).
+
+### Disable the wpa_supplicant service
+We'll disable the wpa_supplicant service and manually create a `wlan0` interface so that we can better control the wpa_supplicant parameters and the `wlan0` interface.
+
+Disable the wpa_supplicant service (the service will not stop immediately, but will not auto-start on next boot):
+```bash
+sudo systemctl disable wpa_supplicant
+```
+
+### Create and Configure Network Interfaces
+I tried creating separate files for `br0` and `wlan0` in the `/etc/network/interfaces.d` folder, but I could not get that to work correctly. The `wlan0` interface would not be properly added to the `br0` bridge on boot. I could only get this to work if I listed both in the `/etc/network/interfaces` file and put the `auto` lines for both interfaces up top.
+
+Edit the interfaces configuration file with this command:
+```bash
+sudo nano /etc/network/interfaces
+```
+
+Change the file to this:
+```text
+# interfaces(5) file used by ifup(8) and ifdown(8)
+
+auto wlan0
+auto br0
+
+iface br0 inet static
+    address 10.1.1.1
+    netmask 255.255.255.0
+    bridge_ports wlan0
+    bridge_stp off
+    bridge_waitport 60 wlan0
+    bridge_fd 0
+
+iface wlan0 inet manual
+    pre-up wpa_supplicant -B -D nl80211 -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf -f /var/log/wpa_supplicant.log
+    post-down killall -q wpa_supplicant
+    wait-delay 15
+
+# Include files from /etc/network/interfaces.d:
+source-directory /etc/network/interfaces.d
+```
+
+Save and exit (`CTRL-X`, 'Y').
+
+This creates the bridge interface `br0` with the static IP address 10.1.1.1. The `bridge_ports` command ensures that, once it's ready, the `wlan0` interface is added to the bridge. And the `bridge_waitport` command waits up to 60 seconds for the `wlan0` interface to become ready.
+
+It also creates the `wlan0` interface, invoking `wpa_supplicant` to start it.
+
+### Enable IP Forwarding
+You'll need to configure the kernel to allow IP forwarding so that we can forward access point traffic to the bridge interface. To do this, edit the sysctl configuration file with this command:
+```bash
+sudo nano /etc/sysctl.conf
+```
+
+Look for the following line that's been disabled with a comment character:
+```text
+#net.ipv4.ip_forward=1
+```
+
+Remove the comment character ('#') so that it looks like this:
+```text
+net.ipv4.ip_forward=1
+```
+
+Save and exit (`CTRL-X`, 'Y').
+
+### Configure iptables to Forward DNS and HTTP to `br0`
+You need to set up forwarding of DNS and HTTP traffic from the access point to the bridge interface. Begin by editing the `/etc/iptables/rules.v4` file with this command:
+```bash
+sudo nano /etc/iptables/rules.v4
+```
+
+Replace any existing content with this:
+```text
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+-A PREROUTING -i br0 -p udp -m udp --dport 53 -j DNAT --to-destination 10.1.1.1:53
+-A PREROUTING -i br0 -p tcp -m tcp --dport 80 -j DNAT --to-destination 10.1.1.1:80
+-A PREROUTING -i br0 -p tcp -m tcp --dport 443 -j DNAT --to-destination 10.1.1.1:80
+-A POSTROUTING -j MASQUERADE
+COMMIT
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+COMMIT
+```
+
+Save and exit (`CTRL-X`, 'Y').
+
+TODO: Explain
+
+### Configure DNSmasq
+Next, you'll configure DNSmasq to handle DNS and DHCP for your access point. Begin editing the configuration file with this command:
+```bash
+sudo nano /etc/dnsmasq.conf
+```
+
+You can completely remove any existing file contents and replace them with this:
+```text
+interface=br0
+listen-address=10.1.1.1
+no-hosts
+dhcp-range=10.1.1.2,10.1.1.254,72h
+dhcp-option=option:router,10.1.1.1
+dhcp-authoritative
+
+address=/#/10.1.1.1
+```
+
+The first few lines tell DNSmasq to listen for traffic on the bridge interface `br0` and IP address 10.1.1.1. The DHCP lines allow the Raspberry Pi to hand out IP addresses to any devices that connect to its access point, and in turn they will treat the Raspberry Pi as their authoritative gateway to the internet. The "address" line redirects DNS traffic from all domains to the Raspberry Pi's IP address. This means that *any* domain name request made by connected clients will be directed to the Raspberry Pi's IP address. If--for example--a connected client tries to visit http://www.microsoft.com, they'll be directed to the Raspberry Pi's web server. Note that the only service we've set up thus far is http. So, if a client tries to telnet or ssh to microsoft.com, the request will time out and fail. Or, more importantly, if a client tries to visit https://www.microsoft.com, the request will time out and fail. You can configure Nginx to host an https server on the Raspberry Pi; however, because you (probably) can't spoof certificates for other websites, client web browsers will pop up big security warnings about invalid certificates and try hard to prevent users from proceeding to your Rogue Portal. So, it's probably not worth the effort to bother with https (this is also another good reason to prefer https when you're surfing the web).
+
+### Enable DNSmasq
+Use this command to edit the `/etc/default/dnsmasq` configuration file:
+```bash
+sudo nano /etc/default/dnsmasq
+```
+
+Look for this line (note: it might already be set to `ENABLED=1`):
+```text
+ENABLED=0
+```
+
+Replace it with this:
+```text
+ENABLED=1
+```
+
+Save and exit (`CTRL-X`, 'Y'). Then run this command:
+```bash
+sudo systemctl enable dnsmasq
+```
+
+This ensures that the DNSmasq service is enabled.
+
+### Disable dhcpcd 
+You're going to use DNSmasq for both DNS and DHCP, so disable the dhcpcd service that's enabled by default on the Raspberry Pi. Use this command:
+```bash
+sudo update-rc.d dhcpcd disable
+```
+
+#### Reboot and Test
+Reboot the Raspberry Pi with this command
+```bash
+sudo reboot
+```
+
+Once the Raspberry Pi boots, you should be able to see and connect to an unsecured access point with the name you selected. Shortly after connecting, your device should prompt you with a Captive Portal connection dialog that should contain the content from your web server. If it does not, try navigating a web browser to an http:// url such as http://example.com. You should see your content.
+
+Have fun!
