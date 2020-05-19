@@ -21,7 +21,6 @@ I built upon the [Rogue Access Point](https://jerryryle.github.io/rogue_ap/) pro
 This section walks you through what you'll need to get an up-to-date copy of Raspbian running on your Raspberry Pi, along with a WiFi connection. You'll need this either to deploy the pre-built Debian packages or to do development.
 
 ### Components
-
 You will need the following:
 
 * Raspberry Pi Zero W - though any Raspberry Pi model should work as long as it has a wireless adapter (built in or connected via USB)
@@ -47,7 +46,7 @@ When Etcher has finished copying the image, remove the SD card from your compute
 ### Set up a WiFi connection for internet access
 In order to configure the device, you'll need to configure the Raspberry Pi to connect to your WiFi network. You can either run `sudo raspi-config` and configure your network from the GUI or do it manually with the following steps.
 
-Type this command to edit the wireless configuration:
+Open the wireless configuration with this command:
 ```bash
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 ```
@@ -76,13 +75,45 @@ sudo apt-get update && sudo apt-get dist-upgrade -y
 ## Deploy the pre-built Debian packages
 This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
 
+### Download the packages
+TODO
 
+### Install the packages
+Use the following to set configuration options for the `macchanger` and `iptables-persistent` packages (you can skip this step, but then you must select "yes" for each of these options when prompted during installation):
+```bash
+sudo debconf-set-selections <<< "macchanger macchanger/automatically_run boolean true"
+sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosave_v6 boolean true"
+sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosave_v4 boolean true"
+```
+
+Install the Rogue Portal and Fast Boot packages:
+```bash
+sudo apt install ./rogue*.deb
+```
+
+Reboot to activate the Rogue Portal
+```bash
+sudo reboot
+```
+
+Once you do this, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. Once the Raspberry Pi boots, you should see the SSID that you selected and connecting to it should pop open your content in a captive portal connection dialog.
+
+If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
+
+Remove the Rogue Portal with:
+```bash
+sudo apt remove rogueportal roguefastboot --purge
+```
+
+Then optionally remove the installed dependencies with:
+```bash
+sudo apt autoremove
+```
 
 ## Build and Deploy the Debian packages from source
 This section will show you how to build the Debian packages from source and then deploy them. Use this method if you want to modify the packages for your own purpose--perhaps to change the configuration or include your own files.
 
 ### Install additional dependencies
-
 Install the additional required packages:
 ```bash
 sudo apt-get install git, debhelper, config-package-dev
@@ -95,22 +126,34 @@ Here's what you're installing and why:
 * **config-package-dev** - This includes tools that allow our Debian package to replace configuration files that were provided by other packages. These tools will allow us to easily revert the changes when our package is removed. You'll need this to build the Rogue Portal package.
 
 ### Clone the Rogue Portal source
-
 Clone the Rogue Portal source repo. From your home folder:
 ```bash
 git clone git@github.com:jerryryle/rogueportal.git
 ```
 
-### Build the packages
+### Make Changes to the Source
+Assuming you'd like to build custom packages for your own deployment, now is where you'd make any desired changes to the source configuration and/or files before packaging them up.
 
+For example, to add your own HTML or media, drop the files into `./rogueportal/files/var/www/letsconnect`. This folder is the root of the content that will be served up when the captive portal is accessed. The configuration currently expects to start with an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
+
+### Build the Packages
 Still from your home folder, build with (the parentheses spawn a subshell so that the directory change is temporary):
 ```bash
 (cd rogueportal && dpkg-buildpackage -uc -us)
 ```
 
 ### Install the packages
+Use the following to set configuration options for the `macchanger` and `iptables-persistent` packages (you can skip this step, but then you must select "yes" for each of these options when prompted during installation):
+```bash
+sudo debconf-set-selections <<< "macchanger macchanger/automatically_run boolean true"
+sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosave_v6 boolean true"
+sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosave_v4 boolean true"
+```
 
-This is the same as the install step in the previous section, so see that step for more details.
+Optionally, use the following to set the WiFi SSID you would like the rogue portal to use (in the command below, replace "Your SSID" with your preferred SSID. Also, you can skip this step, but then you will be prompted for this during installation):
+```bash
+sudo debconf-set-selections <<< "rogueportal rogueportal/ssid string Your SSID"
+```
 
 Install the Rogue Portal and Fast Boot packages:
 ```bash
@@ -122,7 +165,9 @@ Reboot to activate the Rogue Portal
 sudo reboot
 ```
 
-Once you do this, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
+Once you do this, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. Once the Raspberry Pi boots, you should see the SSID that you selected and connecting to it should pop open your content in a captive portal connection dialog.
+
+If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
 
 Remove the Rogue Portal with:
 ```bash
@@ -135,11 +180,9 @@ sudo apt autoremove
 ```
 
 ## Manually create the Rogue Portal
-
 This section will show you how to manually configure Rasbian to be a Rogue Portal. It primarily serves to document the configuration.
 
 ### Install additional dependencies
-
 Install the additional required packages:
 ```bash
 sudo apt-get install bridge-utils, dnsmasq, iptables-persistent, macchanger, nginx
@@ -169,14 +212,97 @@ sudo reboot
 ```
 
 ### Configure the Web Server to serve your content
-First, you'll want to install your html files and ensure they work under nginx.
+Open the default nginx site configuration with the following:
+```bash
+sudo nano /etc/nginx/sites-available/default
+```
 
-TODO: Explain nginx config files
+Change it to the following content:
+```text
+# Default server configuration
+#
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
 
+    # Only allow GET, HEAD, POST
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+
+    # Logs
+    access_log /var/log/nginx/rogueportal.access.log;
+    error_log /var/log/nginx/rogueportal.error.log warn;
+
+    root /var/www/html;
+
+    index index.html;
+
+    server_name _;
+
+    # Handle iOS
+    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
+        return 302 http://$host/letsconnect;
+    }
+
+    # Default redirect for any unexpected content to trigger captive portal
+    # sign in screen on device.
+    location / {
+        return 302 http://$host/letsconnect;
+    }
+
+    location /letsconnect {
+        # First attempt to serve request as file, then
+        # as directory, then fall back to displaying a 404.
+        try_files $uri $uri/ =404;
+    }
+
+    # Redirect these errors to the home page.
+    error_page 401 403 404 =200 /letsconnect/index.html;
+}
+```
+
+#### Explanation of What's Added
+This section briefly outlines the important additions to this file.
+
+This returns an error for any unexpected methods:
+```text
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+```
+It's a light security precaution to ensure that someone cannot execute methods we don't expect.
+
+
+This looks for the iOS-specific method of setting the user agent to check for a captive portal and it returns the redirect that iOS expects:
+```text
+    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
+        return 302 http://$host/letsconnect;
+    }
+```
+This iOS-specific method might not be strictly necessary since we use a default redirect to catch any unexpected request and redirect it. But I've included it in case you'd like to do something iOS-specific.
+
+The following returns a redirect for requests for *any* content--with one notable exception that I'll explain next:
+```text
+    # Default redirect for any unexpected content to trigger captive portal
+    # sign in screen on device.
+    location / {
+        return 302 http://$host/letsconnect;
+    }
+```
+Note that the redirects send the client to a special `letsconnect` path.
+
+This is our one exception that provides the content for the `letsconnect` path:
+```
+    location /letsconnect {
+        # First attempt to serve request as file, then
+        # as directory, then fall back to displaying a 404.
+        try_files $uri $uri/ =404;
+    }
+```
+We've chosen a unique, but arbitrary path that no known captive portal detection schemes use and we've made this our actual content root. Requests for anything other than this special path will result in a redirect--and it's this redirect that triggers the captive portal detection on devices. The captive portal dialog will then pop up and display the content at the `letsconnect` location returned in the redirect. You could change this path to anything you'd like as long as no captive portal detection schemes are actively looking for it.
+
+#### Test nginx Before Moving On
 Your Raspberry Pi will lose internet access once you complete the rest of the steps, so it's worth ensuring that the web server is up and running first.
 
 ### Configure wpa_supplicant to Create an Access Point
-Start by configuring wpa_supplicant to create a wireless access point. Use this command to edit the wpa_supplicant configuration file:
+Start by configuring wpa_supplicant to create a wireless access point. Use this command to open the wpa_supplicant configuration file:
 ```bash
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 ```
@@ -215,7 +341,7 @@ sudo systemctl disable wpa_supplicant
 ### Create and Configure Network Interfaces
 I tried creating separate files for `br0` and `wlan0` in the `/etc/network/interfaces.d` folder, but I could not get that to work correctly. The `wlan0` interface would not be properly added to the `br0` bridge on boot. I could only get this to work if I listed both in the `/etc/network/interfaces` file and put the `auto` lines for both interfaces up top.
 
-Edit the interfaces configuration file with this command:
+Open the interfaces configuration file with this command:
 ```bash
 sudo nano /etc/network/interfaces
 ```
@@ -251,7 +377,7 @@ This creates the bridge interface `br0` with the static IP address 10.1.1.1. The
 It also creates the `wlan0` interface, invoking `wpa_supplicant` to start it.
 
 ### Enable IP Forwarding
-You'll need to configure the kernel to allow IP forwarding so that we can forward access point traffic to the bridge interface. To do this, edit the sysctl configuration file with this command:
+You'll need to configure the kernel to allow IP forwarding so that we can forward access point traffic to the bridge interface. To do this, open the sysctl configuration file with this command:
 ```bash
 sudo nano /etc/sysctl.conf
 ```
@@ -269,7 +395,7 @@ net.ipv4.ip_forward=1
 Save and exit (`CTRL-X`, 'Y').
 
 ### Configure iptables to Forward DNS and HTTP to `br0`
-You need to set up forwarding of DNS and HTTP traffic from the access point to the bridge interface. Begin by editing the `/etc/iptables/rules.v4` file with this command:
+You need to set up forwarding of DNS and HTTP traffic from the access point to the bridge interface. Begin by opening the `/etc/iptables/rules.v4` file with this command:
 ```bash
 sudo nano /etc/iptables/rules.v4
 ```
@@ -298,7 +424,7 @@ Save and exit (`CTRL-X`, 'Y').
 TODO: Explain
 
 ### Configure DNSmasq
-Next, you'll configure DNSmasq to handle DNS and DHCP for your access point. Begin editing the configuration file with this command:
+Next, you'll configure DNSmasq to handle DNS and DHCP for your access point. Open the configuration file with this command:
 ```bash
 sudo nano /etc/dnsmasq.conf
 ```
@@ -318,7 +444,7 @@ address=/#/10.1.1.1
 The first few lines tell DNSmasq to listen for traffic on the bridge interface `br0` and IP address 10.1.1.1. The DHCP lines allow the Raspberry Pi to hand out IP addresses to any devices that connect to its access point, and in turn they will treat the Raspberry Pi as their authoritative gateway to the internet. The "address" line redirects DNS traffic from all domains to the Raspberry Pi's IP address. This means that *any* domain name request made by connected clients will be directed to the Raspberry Pi's IP address. If--for example--a connected client tries to visit http://www.microsoft.com, they'll be directed to the Raspberry Pi's web server. Note that the only service we've set up thus far is http. So, if a client tries to telnet or ssh to microsoft.com, the request will time out and fail. Or, more importantly, if a client tries to visit https://www.microsoft.com, the request will time out and fail. You can configure Nginx to host an https server on the Raspberry Pi; however, because you (probably) can't spoof certificates for other websites, client web browsers will pop up big security warnings about invalid certificates and try hard to prevent users from proceeding to your Rogue Portal. So, it's probably not worth the effort to bother with https (this is also another good reason to prefer https when you're surfing the web).
 
 ### Enable DNSmasq
-Use this command to edit the `/etc/default/dnsmasq` configuration file:
+Use this command to open the `/etc/default/dnsmasq` configuration file:
 ```bash
 sudo nano /etc/default/dnsmasq
 ```
