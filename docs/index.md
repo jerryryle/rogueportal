@@ -76,7 +76,11 @@ sudo apt-get update && sudo apt-get dist-upgrade -y
 This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
 
 ### Download the packages
-TODO
+From your home folder, run the following to fetch the latest release packages:
+```bash
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.0-RaspbianBuster/rogueportal_1.0_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.0-RaspbianBuster/roguefastboot_1.0_armhf.deb
+```
 
 ### Install the packages
 Use the following to set configuration options for the `macchanger` and `iptables-persistent` packages (you can skip this step, but then you must select "yes" for each of these options when prompted during installation):
