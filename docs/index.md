@@ -444,10 +444,36 @@ COMMIT
 :OUTPUT ACCEPT [0:0]
 COMMIT
 ```
-
 Save and exit (`CTRL-X`, 'Y').
 
-TODO: Explain
+These lines ensure that the targets for all of the relevant chains in the `nat` table are configured to let packets through to the next stage of processing.
+```text
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+```
+
+These lines add rules that do NAT translation of traffic destined for any IP address on specific ports into traffic destined for our local IP address. The rule for port 53 tricks clients into talking to our DNS server regardless of what DNS server they were trying to reach. The rule for port 80 tricks clients making http requests into talking to our web server. The rule for port 443 tricks clients making https requests (port 443) into talking to our web server via http (port 80). This last one won't accomplish anything useful for our rogue captive portal, but it serves as an example of how to do port translation.
+```text
+-A PREROUTING -i br0 -p udp -m udp --dport 53 -j DNAT --to-destination 10.1.1.1:53
+-A PREROUTING -i br0 -p tcp -m tcp --dport 80 -j DNAT --to-destination 10.1.1.1:80
+-A PREROUTING -i br0 -p tcp -m tcp --dport 443 -j DNAT --to-destination 10.1.1.1:80
+```
+
+This line tells the NAT translation to use masquerading. The explanation for this is beyond the scope of this document.
+```text
+-A POSTROUTING -j MASQUERADE
+```
+
+These lines ensure that the targets for all of the relevant chains in the `filter` table are configured to let packets through to the next stage of processing--effectively allowing all traffic through.
+```text
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+```
 
 ### Configure DNSmasq
 Next, you'll configure DNSmasq to handle DNS and DHCP for your access point. Open the configuration file with this command:
