@@ -27,12 +27,12 @@ This section walks you through what you'll need to get an up-to-date copy of Ras
 ### Components
 You will need the following:
 
-* Raspberry Pi Zero W - though any Raspberry Pi model should work as long as it has a wireless adapter (built in or connected via USB)
-* Micro SD card - Use at least a 4GB class 10 card
-* HDMI cable and HDMI-compatible monitor or TV
-* USB OTG cable and 2A AC adapter for power
-* Keyboard and micro USB adapter or powered USB hub
-* WiFi
+* [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) - though any Raspberry Pi model should work as long as it has a wireless adapter (built in or connected via USB)
+* [Micro SD card](https://www.amazon.com/Samsung-MicroSDHC-Adapter-MB-ME32GA-AM/dp/B06XWN9Q99) - Use at least a 4GB class 10 card
+* HDMI-compatible monitor or TV and HDMI cable
+* Mini HDMI and micro USB OTG adapters and 2A AC adapter for power ([kits like this](https://www.amazon.com/Vilros-Raspberry-Starter-Power-Premium/dp/B0748MBFTS) contain a Raspberry Pi Zero W along with the cable adapters and power adapters you'll need)
+* Keyboard
+* WiFi with internet connection
 * Computer with SD card reader to download Raspbian and install it onto the SD card
 * Computer or phone with WiFi to test the Rogue Portal
 
@@ -43,7 +43,7 @@ For writing the image to your SD card, get Etcher from [https://www.balena.io/et
 
 Insert the SD card in your computer and use Etcher to copy the Raspbian image to the SD card (it will overwrite any data currently on the card).
 
-![Etcher screenshot](etcher_screen_shot.png)
+![Etcher screenshot](etcher_screenshot.png)
 
 When Etcher has finished copying the image, remove the SD card from your computer, plug it into the Raspberry Pi, connect a keyboard and monitor, and plug in the AC adapter. The system should boot to a login prompt. Log in using the default username `pi` and password `raspberry`.
 
@@ -76,6 +76,11 @@ Next, update the system with the following command:
 sudo apt-get update && sudo apt-get dist-upgrade -y
 ```
 
+Reboot after the update has completed:
+```bash
+sudo reboot
+```
+
 ## Deploy the pre-built Debian packages
 This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
 
@@ -94,17 +99,28 @@ sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosav
 sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosave_v4 boolean true"
 ```
 
+Optionally, use the following to set the WiFi SSID you would like the rogue portal to use (in the command below, replace "Your SSID" with your preferred SSID.):
+```bash
+sudo debconf-set-selections <<< "rogueportal rogueportal/ssid string Your SSID"
+```
+You can skip this step to be prompted for the SSID during installation.
+
 Install the Rogue Portal and Fast Boot packages:
 ```bash
 sudo apt install ./rogue*.deb
 ```
+
+If you would like to add your own HTML or media, drop the files into `/var/www/html/letsconnect`. The `html` folder is the web server root, but the `letsconnect` folder must contain the content that will be served up when the captive portal is accessed (this document explains why later). The configuration currently expects this folder to contains an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
 
 Reboot to activate the Rogue Portal
 ```bash
 sudo reboot
 ```
 
-Once you do this, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. Once the Raspberry Pi boots, you should see the SSID that you selected and connecting to it should pop open your content in a captive portal connection dialog.
+Once you reboot, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. After the Raspberry Pi boots, you should see the SSID that you selected and connecting to it should pop open your content in a captive portal connection dialog.
+
+![Captive Portal Screenshot](captive_portal_screenshot.png)
+
 
 If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
 
@@ -129,7 +145,7 @@ sudo apt-get install git, debhelper, config-package-dev
 
 Here's what you're installing and why:
 
-* **git** - This is needed to clone the repository that contains setup scripts and configuration files. (If you're planning to do all of the setup by hand, you don't need this)
+* **git** - This is needed to clone the repository that contains setup scripts and configuration files.
 * **debhelper** - This includes tools for building Debian packages. You'll need this to build the Rogue Portal package.
 * **config-package-dev** - This includes tools that allow our Debian package to replace configuration files that were provided by other packages. These tools will allow us to easily revert the changes when our package is removed. You'll need this to build the Rogue Portal package.
 
@@ -142,13 +158,14 @@ git clone git@github.com:jerryryle/rogueportal.git
 ### Make Changes to the Source
 Assuming you'd like to build custom packages for your own deployment, now is where you'd make any desired changes to the source configuration and/or files before packaging them up.
 
-For example, to add your own HTML or media, drop the files into `./rogueportal/files/var/www/letsconnect`. This folder is the root of the content that will be served up when the captive portal is accessed. The configuration currently expects to start with an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
+For example, to add your own HTML or media, drop the files into `./rogueportal/files/var/www/letsconnect`. The `html` folder is the web server root, but the `letsconnect` folder must contain the content that will be served up when the captive portal is accessed (this document explains why later). The configuration currently expects this folder to contains an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
 
 ### Build the Packages
-Still from your home folder, build with (the parentheses spawn a subshell so that the directory change is temporary):
+Still from your home folder, build with the following commmand:
 ```bash
 (cd rogueportal && dpkg-buildpackage -uc -us)
 ```
+The parentheses spawn a subshell so that the directory change is temporary. We do this because the build places the output up outside of the source folder, so this will save us from switching into the source folder to build and then back out to install the packages.
 
 ### Install the packages
 Use the following to set configuration options for the `macchanger` and `iptables-persistent` packages (you can skip this step, but then you must select "yes" for each of these options when prompted during installation):
@@ -158,10 +175,11 @@ sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosav
 sudo debconf-set-selections <<< "iptables-persistent iptables-persistent/autosave_v4 boolean true"
 ```
 
-Optionally, use the following to set the WiFi SSID you would like the rogue portal to use (in the command below, replace "Your SSID" with your preferred SSID. Also, you can skip this step, but then you will be prompted for this during installation):
+Optionally, use the following to set the WiFi SSID you would like the rogue portal to use (in the command below, replace "Your SSID" with your preferred SSID.):
 ```bash
 sudo debconf-set-selections <<< "rogueportal rogueportal/ssid string Your SSID"
 ```
+You can skip this step to be prompted for the SSID during installation.
 
 Install the Rogue Portal and Fast Boot packages:
 ```bash
@@ -173,7 +191,7 @@ Reboot to activate the Rogue Portal
 sudo reboot
 ```
 
-Once you do this, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. Once the Raspberry Pi boots, you should see the SSID that you selected and connecting to it should pop open your content in a captive portal connection dialog.
+Once you reboot, your Raspberry Pi will lose internet access since you have converted its wireless hardware from a WiFi client to an Access Point. After the Raspberry Pi boots, you should see the SSID that you selected and connecting to it should pop open your content in a captive portal connection dialog.
 
 If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
 
@@ -188,7 +206,7 @@ sudo apt autoremove
 ```
 
 ## Manually create the Rogue Portal
-This section will show you how to manually configure Rasbian to be a Rogue Portal. It primarily serves to document the configuration.
+This section will show you how to manually configure Rasbian to be a Rogue Portal without using the Debian packages. It primarily serves to document the configuration that the Debian packages do.
 
 ### Install additional dependencies
 Install the additional required packages:
@@ -480,7 +498,7 @@ You're going to use DNSmasq for both DNS and DHCP, so disable the dhcpcd service
 sudo update-rc.d dhcpcd disable
 ```
 
-#### Reboot and Test
+### Reboot and Test
 Reboot the Raspberry Pi with this command
 ```bash
 sudo reboot
