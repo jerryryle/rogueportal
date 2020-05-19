@@ -14,8 +14,12 @@ I built upon the [Rogue Access Point](https://jerryryle.github.io/rogue_ap/) pro
 
 1. I built a Debian package instead of a hackish install script.
 2. I figured out how to create the access point with [wpa_supplicant](https://w1.fi/wpa_supplicant/) instead of installing [hostapd](https://w1.fi/hostapd/).
-3. I used nginx instead of Apache and configure it only to serve static content. Serving a web app is left as an exercise for the reader.
+3. I used [nginx](http://nginx.org) instead of [Apache](https://httpd.apache.org) and configured it only to serve static content. Serving a web app is left as an exercise for the reader.
 4. I created a "fast boot" package that makes a few tweaks to the Raspbian configuration to speed up the boot process. This is by no means comprehensive and could probably use more work to boot as fast as possible.
+
+## Table of Contents
+* TOC
+{:toc}
 
 ## Preparation
 This section walks you through what you'll need to get an up-to-date copy of Raspbian running on your Raspberry Pi, along with a WiFi connection. You'll need this either to deploy the pre-built Debian packages or to do development.
