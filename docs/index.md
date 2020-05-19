@@ -2,7 +2,7 @@
 title: "Rogue Captive Portal using a Raspberry Pi Zero W"
 ---
 # Building a Rogue Captive Portal with the Raspberry Pi Zero W
-May 17, 2020 - This is a work in progress. The documentation is not complete.
+May 18, 2020
 
 I previously created a "Rogue Access Point" ([see project here](https://jerryryle.github.io/rogue_ap/)) that made a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) act as a WiFi hotspot and serve up a Python web app to anyone who connected to it. That implementation specifically attempted to fool captive portal detection on devices so that they wouldn't pop up a captive portal connection dialog after connecting to the WiFi access point. It would then route all traffic to the Python web app so that when a user attempted to visit a website, for example http://google.com, they would see the app instead.
 
