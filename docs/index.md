@@ -4,7 +4,7 @@ title: "Rogue Captive Portal using a Raspberry Pi Zero W"
 # Building a Rogue Captive Portal with the Raspberry Pi Zero W
 May 18, 2020
 
-I previously created a "Rogue Access Point" ([see project here](https://jerryryle.github.io/rogue_ap/)) that made a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) act as a WiFi hotspot and serve up a Python web app to anyone who connected to it. That implementation specifically attempted to fool captive portal detection on devices so that they wouldn't pop up a captive portal connection dialog after connecting to the WiFi access point. It would then route all traffic to the Python web app so that when a user attempted to visit a website, for example http://google.com, they would see the app instead.
+I previously created a "Rogue Access Point" ([see project here](https://jerryryle.github.io/rogue_ap/)) that made a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) act as a WiFi hotspot and serve up a Python web app to anyone who connected to it. That implementation specifically attempted to fool captive portal detection on devices so that they wouldn't pop up a captive portal connection dialog after connecting to the WiFi access point. It would then route all traffic to the Python web app so that when a user attempted to visit a website (for example, http://google.com) they would see the app instead.
 
 That exercise was fun, but the push to use https everywhere detracted from its usefulness. Because the rogue access point can't have valid https certificates for most websites, the user is presented with a big security warning when they attempt to access any site via https. And, since many browsers now try https first, this makes the rogue access point useless (Hooray! The internet is getting better).
 
@@ -110,7 +110,7 @@ Install the Rogue Portal and Fast Boot packages:
 sudo apt install ./rogue*.deb
 ```
 
-If you would like to add your own HTML or media, drop the files into `/var/www/html/letsconnect`. The `html` folder is the web server root, but the `letsconnect` folder must contain the content that will be served up when the captive portal is accessed (this document explains why later). The configuration currently expects this folder to contains an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
+If you would like to add your own HTML or media, drop the files into `/var/www/html/letsconnect`. The `html` folder is the web server root, but the `letsconnect` folder must contain the content that will be served up when the captive portal is accessed (I'll explain why later). The configuration currently expects this folder to contain an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
 
 Reboot to activate the Rogue Portal
 ```bash
@@ -530,6 +530,6 @@ Reboot the Raspberry Pi with this command
 sudo reboot
 ```
 
-Once the Raspberry Pi boots, you should be able to see and connect to an unsecured access point with the name you selected. Shortly after connecting, your device should prompt you with a Captive Portal connection dialog that should contain the content from your web server. If it does not, try navigating a web browser to an http:// url such as http://example.com. You should see your content.
+Once the Raspberry Pi boots, you should be able to see and connect to an unsecured access point with the name you selected. Shortly after connecting, your device should prompt you with a Captive Portal connection dialog that should contain the content from your web server. If it does not, something may have gone wrong with your Raspberry Pi configuration or your device's captive portal detection. To begin diagnosing the problem, you can try navigating a web browser to an http:// url such as http://example.com. If the web server, routing, etc. is configured correctly on the Raspberry Pi, you should see your content.
 
 Have fun!
