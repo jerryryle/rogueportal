@@ -140,7 +140,7 @@ This section will show you how to build the Debian packages from source and then
 ### Install additional dependencies
 Install the additional required packages:
 ```bash
-sudo apt-get install git, debhelper, config-package-dev
+sudo apt-get install git debhelper config-package-dev
 ```
 
 Here's what you're installing and why:
