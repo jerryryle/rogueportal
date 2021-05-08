@@ -1,5 +1,5 @@
 #!/bin/sh
-# postrm script for poop
+# postrm script for roguefastboot
 #
 # see: dh_installdeb(1)
 

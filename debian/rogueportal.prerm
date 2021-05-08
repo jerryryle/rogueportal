@@ -1,5 +1,5 @@
 #!/bin/sh
-# prerm script for poop
+# prerm script for rogueportal
 #
 # see: dh_installdeb(1)
 
