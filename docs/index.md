@@ -150,9 +150,9 @@ Here's what you're installing and why:
 * **config-package-dev** - This includes tools that allow our Debian package to replace configuration files that were provided by other packages. These tools will allow us to easily revert the changes when our package is removed. You'll need this to build the Rogue Portal package.
 
 ### Clone the Rogue Portal source
-Clone the Rogue Portal source repo. From your home folder:
+Clone the Rogue Portal source repo. If you just want to clone and build, use https instead of ssh so you don't need to set up keys on the Raspberry Pi. From your home folder:
 ```bash
-git clone git@github.com:jerryryle/rogueportal.git
+git clone https://github.com/jerryryle/rogueportal.git
 ```
 
 ### Make Changes to the Source
