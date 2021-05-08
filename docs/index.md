@@ -73,7 +73,7 @@ At this point, you might wish to enable ssh and perform as much of the the remai
 ### Update Raspbian
 Next, update the system with the following command:
 ```bash
-sudo apt-get update && sudo apt-get dist-upgrade -y
+sudo apt update && sudo apt dist-upgrade -y
 ```
 
 Reboot after the update has completed:
@@ -140,7 +140,7 @@ This section will show you how to build the Debian packages from source and then
 ### Install additional dependencies
 Install the additional required packages:
 ```bash
-sudo apt-get install git, debhelper, config-package-dev
+sudo apt install git debhelper config-package-dev
 ```
 
 Here's what you're installing and why:
@@ -150,9 +150,9 @@ Here's what you're installing and why:
 * **config-package-dev** - This includes tools that allow our Debian package to replace configuration files that were provided by other packages. These tools will allow us to easily revert the changes when our package is removed. You'll need this to build the Rogue Portal package.
 
 ### Clone the Rogue Portal source
-Clone the Rogue Portal source repo. From your home folder:
+Clone the Rogue Portal source repo. If you just want to clone and build, use https instead of ssh so you don't need to set up keys on the Raspberry Pi. From your home folder:
 ```bash
-git clone git@github.com:jerryryle/rogueportal.git
+git clone https://github.com/jerryryle/rogueportal.git
 ```
 
 ### Make Changes to the Source
@@ -211,7 +211,7 @@ This section will show you how to manually configure Rasbian to be a Rogue Porta
 ### Install additional dependencies
 Install the additional required packages:
 ```bash
-sudo apt-get install bridge-utils, dnsmasq, iptables-persistent, macchanger, nginx
+sudo apt install bridge-utils dnsmasq iptables-persistent macchanger nginx
 ```
 
 During the installation of the `iptables-persistent` package, you will be asked whether you'd like to save the current iptables rules. It will prompt you separately for both IPv4 and IPv6 rules. For each prompt, select 'Yes' with the arrow keys and press `Enter`:

@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for poop
+# postinst script for roguefastboot
 #
 # see: dh_installdeb(1)
 
@@ -25,11 +25,15 @@ set -e
 # File diversions are created here.
 #DEBHELPER#
 
-copy_with_backup () {
+create_backup () {
 	# If the destination file exists, back it up--but only if the backup file does not already exist
-	if [ -f $2 ] && [ ! -f $2.roguefastboot-orig ]; then
-		mv -f ${2} ${2}.roguefastboot-orig
+	if [ -f ${1} ] && [ ! -f ${1}.roguefastboot-orig ]; then
+		cp -f ${1} ${1}.roguefastboot-orig
 	fi
+}
+
+copy_with_backup () {
+	create_backup ${2}
 	cp -f ${1} ${2}
 }
 
@@ -37,8 +41,12 @@ case "$1" in
     configure)
 		# Cannot use diversions for these files because /boot is a FAT partition that does
 		# not support symbolic links
+
 		copy_with_backup /etc/roguefastboot/boot/config.txt.roguefastboot /boot/config.txt
-		copy_with_backup /etc/roguefastboot/boot/cmdline.txt.roguefastboot /boot/cmdline.txt
+
+		# Add 'quiet' to the end of the boot command line
+		create_backup /boot/cmdline.txt
+		sed -i '1 s/$/ quiet/' /boot/cmdline.txt
 
 		# Disable services not needed for the rogue captive portal
 		systemctl disable dhcpcd.service
