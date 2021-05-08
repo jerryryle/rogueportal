@@ -87,8 +87,8 @@ This section will show you how to deploy the pre-built Debian packages to create
 ### Download the packages
 From your home folder, run the following to fetch the latest release packages:
 ```bash
-wget https://github.com/jerryryle/rogueportal/releases/download/v1.0-RaspbianBuster/rogueportal_1.0_armhf.deb
-wget https://github.com/jerryryle/rogueportal/releases/download/v1.0-RaspbianBuster/roguefastboot_1.0_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.1-RaspbianBuster/rogueportal_1.1_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.1-RaspbianBuster/roguefastboot_1.1_armhf.deb
 ```
 
 ### Install the packages
