@@ -28,7 +28,7 @@ set -e
 create_backup () {
 	# If the destination file exists, back it up--but only if the backup file does not already exist
 	if [ -f ${1} ] && [ ! -f ${1}.roguefastboot-orig ]; then
-		mv -f ${1} ${1}.roguefastboot-orig
+		cp -f ${1} ${1}.roguefastboot-orig
 	fi
 }
 
