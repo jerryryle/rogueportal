@@ -1,7 +1,7 @@
 Source: rogueportal
 Section: config
 Priority: optional
-Maintainer: Jerry Ryle <jerryryle@gmail.com>
+Maintainer: Jerry Ryle <jerry@ryle.io>
 Build-Depends: debhelper (>= 11), config-package-dev (>= 5.5~)
 Standards-Version: 4.1.3
 Homepage: https://github.com/jerryryle/rogueportal
