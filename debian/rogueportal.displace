@@ -1,7 +1,7 @@
+/etc/dhcpcd.conf.rogueportal
 /etc/dnsmasq.conf.rogueportal
+/etc/default/dnsmasq.rogueportal
 /etc/sysctl.conf.rogueportal
 /etc/iptables/rules.v4.rogueportal
-/etc/network/interfaces.rogueportal
-/etc/wpa_supplicant/wpa_supplicant.conf.rogueportal
 /etc/nginx/nginx.conf.rogueportal
 /etc/nginx/sites-available/default.rogueportal

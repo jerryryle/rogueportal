@@ -29,7 +29,7 @@ case "$1" in
     configure)
         db_get rogueportal/ssid || true
         # SSID will be in $RET after above
-        sed -i -- "s/ssid=.*$/ssid=\"${RET}\"/g" /etc/wpa_supplicant/wpa_supplicant.conf.rogueportal
+        sed -i -- "s/ssid=.*$/ssid=\"${RET}\"/g" /etc/wpa_supplicant/wpa_supplicant_rogueportal.conf
 
 		systemctl enable dnsmasq
 
