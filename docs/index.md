@@ -1,8 +1,8 @@
 ---
-title: "Rogue Captive Portal using a Raspberry Pi Zero W"
+title: "Rogue Captive Portal using a Raspberry Pi"
 ---
-# Building a Rogue Captive Portal with the Raspberry Pi Zero W
-May 14, 2021 - Update: Rogue Portal can now run on `wlan0` while coexisting with other networks. Tested with WiFi and wired Ethernet on Raspberry Pi 3 B+.
+# Building a Rogue Captive Portal with the Raspberry Pi
+May 14, 2021 - Update: Rogue Portal can now run on `wlan0` while coexisting with other networks. Tested with WiFi and wired Ethernet on Raspberry Pi Zero W and Raspberry Pi 3 B+.
 
 I previously created a "Rogue Access Point" ([see project here](https://jerryryle.github.io/rogue_ap/)) that made a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) act as a WiFi hotspot and serve up a Python web app to anyone who connected to it. That implementation specifically attempted to fool captive portal detection on devices so that they wouldn't pop up a captive portal connection dialog after connecting to the WiFi access point. It would then route all traffic to the Python web app so that when a user attempted to visit a website (for example, http://google.com) they would see the app instead.
 
@@ -27,7 +27,7 @@ This section walks you through what you'll need to get a fully-updated copy of R
 ### Components
 You will need the following:
 
-* [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) - though any Raspberry Pi model should work as long as it has a wireless adapter on `wlan0` (either built in or connected via USB)
+* [Raspberry Pi](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) - Any Raspberry Pi model should work as long as it has a wireless adapter on `wlan0` (either built in or connected via USB)
 * [Micro SD card](https://www.amazon.com/Samsung-MicroSDHC-Adapter-MB-ME32GA-AM/dp/B06XWN9Q99) - Use at least a 4GB class 10 card
 * HDMI-compatible monitor or TV and HDMI cable
 * Mini HDMI and micro USB OTG adapters and 2A AC adapter for power ([kits like this](https://www.amazon.com/Vilros-Raspberry-Starter-Power-Premium/dp/B0748MBFTS) contain a Raspberry Pi Zero W along with the cable adapters and power adapters you'll need)
