@@ -32,7 +32,6 @@ case "$1" in
 
 		# Enable services that were disabled because they were not needed 
 		# for the rogue captive portal
-		systemctl enable dhcpcd.service
 		systemctl enable systemd-timesyncd.service
 		systemctl enable keyboard-setup.service
     ;;

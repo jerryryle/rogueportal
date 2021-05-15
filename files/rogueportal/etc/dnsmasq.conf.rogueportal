@@ -1,4 +1,3 @@
-interface=br0
 listen-address=10.1.1.1
 no-hosts
 dhcp-range=10.1.1.2,10.1.1.254,72h

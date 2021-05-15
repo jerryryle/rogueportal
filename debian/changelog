@@ -1,3 +1,15 @@
+rogueportal (1.2) buster; urgency=medium
+
+  * Updated configuration to use dhcpcd instead of /etc/network/interfaces
+  * Configuration no longer requires a bridge, so bridge-utils is no longer a
+    package dependency.
+  * The rogue portal is now configured for wlan0 only, allowing it to work
+    alongside another network connection. So, for example, you can now have the
+    rogue portal running on wlan0 and still ssh into the pi via a wired
+    connection.
+
+ -- Jerry Ryle <jerry@ryle.io>  Thu, 13 May 2021 21:56:00 -0800
+
 rogueportal (1.1) buster; urgency=medium
 
   * Fixed fastboot package that contained a hard-coded partition UUID in the

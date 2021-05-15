@@ -49,7 +49,6 @@ case "$1" in
 		sed -i '1 s/$/ quiet/' /boot/cmdline.txt
 
 		# Disable services not needed for the rogue captive portal
-		systemctl disable dhcpcd.service
 		systemctl disable systemd-timesyncd.service
 		systemctl disable keyboard-setup.service
     ;;

@@ -16,7 +16,6 @@ set -e
 
 case "$1" in
     install|upgrade)
-		update-rc.d dhcpcd disable
         systemctl disable wpa_supplicant
     ;;
 
