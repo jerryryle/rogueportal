@@ -92,7 +92,7 @@ There are three paths you can take from here:
 2. You can build and deploy the Debian packages from source if you're interested in getting set up with a development environment that lets you build your own packages with custom content or customized configuration changes.
 3. You can manually create the Rogue Portal if you're interested in understanding the details of what is needed to create one.
 
-You can scroll back up to the [TOC][Table of Contents] to quickly find each.
+You can scroll back up to the [TOC](#table-of-contents) to quickly find each.
 
 ## Deploy the pre-built Debian packages
 This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
