@@ -29,12 +29,17 @@ You will need the following:
 
 * [Raspberry Pi](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) - Any Raspberry Pi model should work as long as it has a wireless adapter on `wlan0` (either built in or connected via USB)
 * [Micro SD card](https://www.amazon.com/Samsung-MicroSDHC-Adapter-MB-ME32GA-AM/dp/B06XWN9Q99) - Use at least a 4GB class 10 card
-* HDMI-compatible monitor or TV and HDMI cable
-* Mini HDMI and micro USB OTG adapters and 2A AC adapter for power ([kits like this](https://www.amazon.com/Vilros-Raspberry-Starter-Power-Premium/dp/B0748MBFTS) contain a Raspberry Pi Zero W along with the cable adapters and power adapters you'll need)
-* Keyboard
 * WiFi or wired network with internet connection
 * Computer with SD card reader to download Raspberry Pi OS and install it onto the SD card
 * Computer or phone with WiFi to test the Rogue Portal
+
+You will likely want the following:
+
+* [AC adapter](https://www.amazon.com/NorthPada-Raspberry-Supply-Charger-Adapter/dp/B01N336XEU) for power
+* HDMI-compatible monitor or TV and HDMI cable
+* Keyboard
+
+If using a Raspberry Pi Zero, you will also likely want Mini HDMI and micro USB OTG adapters and 2A AC adapter for power ([kits like this](https://www.amazon.com/Vilros-Raspberry-Starter-Power-Premium/dp/B0748MBFTS) contain a Raspberry Pi Zero W along with the cable adapters and power adapters you'll need)
 
 ### Create a Raspberry Pi OS SD Card
 First, you need to get the Raspberry Pi up and running with the required packages. Download the latest image of Raspberry Pi OS Buster Lite from [https://www.raspberrypi.org/software/operating-systems/](https://www.raspberrypi.org/software/operating-systems/)
