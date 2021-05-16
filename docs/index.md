@@ -105,8 +105,8 @@ This section will show you how to deploy the pre-built Debian packages to create
 ### Download the packages
 From your home folder, run the following to fetch the latest release packages:
 ```bash
-wget https://github.com/jerryryle/rogueportal/releases/download/v1.2-RaspbianBuster/rogueportal_1.2_armhf.deb
-wget https://github.com/jerryryle/rogueportal/releases/download/v1.2-RaspbianBuster/roguefastboot_1.2_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.3-RaspbianBuster/rogueportal_1.3_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.3-RaspbianBuster/roguefastboot_1.3_armhf.deb
 ```
 
 I try to remember to update this documentation with the proper URLs when there are new releases, but you can double-check [the Github project](https://github.com/jerryryle/rogueportal/releases/latest) for the latest version.
@@ -130,7 +130,7 @@ Install the Rogue Portal and Fast Boot packages:
 sudo apt install ./rogue*.deb
 ```
 
-If you would like to add your own HTML or media, drop the files into `/var/www/html/letsconnect`. The `html` folder is the web server root, but the `letsconnect` folder must contain the content that will be served up when the captive portal is accessed (I'll explain why later). The configuration currently expects this folder to contain an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
+If you would like to add your own HTML or media, drop the files into `/var/www/html/`. The configuration currently expects this folder to contain an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the `nginx` configuration to expect differently, which is outside the scope of this document.
 
 Reboot to activate the Rogue Portal
 ```bash
@@ -141,7 +141,7 @@ Once you reboot, your Raspberry Pi may lose internet access since you have conve
 
 ![Captive Portal Screenshot](captive_portal_screenshot.png)
 
-
+### Remove the packages
 If you need to restore WiFi so that you can access the internet from your Raspberry Pi, you can remove the Rogue Portal configuration.
 
 Remove the Rogue Portal with:
@@ -178,7 +178,7 @@ git clone https://github.com/jerryryle/rogueportal.git
 ### Make Changes to the Source
 Assuming you'd like to build custom packages for your own deployment, now is where you'd make any desired changes to the source configuration and/or files before packaging them up.
 
-For example, to add your own HTML or media, drop the files into `./rogueportal/files/var/www/html/letsconnect`. The `html` folder is the web server root, but the `letsconnect` folder must contain the content that will be served up when the captive portal is accessed (this document explains why later). The configuration currently expects this folder to contains an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the nginx configuration to expect differently, which is outside the scope of this document.
+For example, to add your own HTML or media, drop the files into `./rogueportal/files/var/www/html/`. The configuration currently expects this folder to contains an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the `nginx` configuration to expect differently, which is outside the scope of this document.
 
 ### Build the Packages
 Still from your home folder, build with the following commmand:
@@ -228,6 +228,11 @@ sudo apt autoremove
 ## Manually create the Rogue Portal
 This section will show you how to manually configure Rasbian to be a Rogue Portal without using the Debian packages. It primarily serves to document the configuration that the Debian packages do.
 
+### A brief explanation of how the Rogue Portal works
+After connecting to a new WiFi network, a device will first request a specific "known good" test URL to see if it can reach the internet. If it gets the response its expecting, it will infer that it is connected to the internet and do nothing.
+
+If the device receives a response that contains a redirect to a new URL, it assumes that it cannot yet reach the internet, but that there is a "captive portal" in place with which the user needs to interact before internet access is granted. The device will pop up a special captive portal window, which is a web client that will be pointed to the new URL received in the redirect. The intent is to let the user access content served up by the captive portal so that they can accept a usage agreement or make a payment for internet access. But we can use this feature to serve up arbitrary content from the Raspberry Pi with no intention of ever proceeding to allow internet access.
+
 ### Install additional dependencies
 Install the additional required packages:
 ```bash
@@ -257,18 +262,19 @@ sudo reboot
 ```
 
 ### Configure the Web Server to serve your content
-Open the default nginx site configuration with the following:
+Open the default `nginx` site configuration with the following:
 ```bash
 sudo nano /etc/nginx/sites-available/default
 ```
 
 Change it to the following content:
 ```text
-# Default server configuration
-#
+# The go.rogueportal server
+# This handles any request that includes go.rogueportal as the server name.
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+    listen 80;
+    listen [::]:80;
+    server_name go.rogueportal;
 
     # Only allow GET, HEAD, POST
     if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
@@ -281,69 +287,74 @@ server {
 
     index index.html;
 
-    server_name _;
-
-    # Handle iOS
-    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
-        return 302 http://$host/letsconnect;
-    }
-
-    # Default redirect for any unexpected content to trigger captive portal
-    # sign in screen on device.
     location / {
-        return 302 http://$host/letsconnect;
-    }
-
-    location /letsconnect {
         # First attempt to serve request as file, then
         # as directory, then fall back to displaying a 404.
         try_files $uri $uri/ =404;
     }
 
     # Redirect these errors to the home page.
-    error_page 401 403 404 =200 /letsconnect/index.html;
+    error_page 401 403 404 =200 /index.html;
+}
+
+# Default server configuration
+# This handles any request not made using the go.rogueportal server name and
+# serves a redirect to go.rogueportal.
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    # Only allow GET, HEAD, POST
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+
+    # Logs
+    access_log /var/log/nginx/rogueportal_redirect.access.log;
+    error_log /var/log/nginx/rogueportal_redirect.error.log warn;
+
+    # Handle iOS
+    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
+        return 302 http://go.rogueportal;
+    }
+
+    # Default redirect for any unexpected requests to trigger captive portal
+    # sign in screen on device.
+    location / {
+        return 302 http://go.rogueportal;
+    }
 }
 ```
 
 #### Explanation of what's added
 This section briefly outlines the important additions to this file.
 
-This returns an error for any unexpected methods:
+I've arbitrarily chosen `go.rogueportal` as the server name for the Rogue Portal. You can change this if you'd like; however, you'll want to search through all of the projects files as you'll need to replace it in several locations. You can choose any name you like, but it should not be a name that is used by any captive portal detection scheme (e.g. using a real domain such as "apple.com" would be a bad choice because vendors may use their own domains to try to detect captive portals).
+
+The Rogue Portal uses the server name to determine whether a client is attempting to test the internet connection or whether the client is attempting to display captive portal content.
+
+The `nginx` configuration sets up two virtual servers, both listening on port 80. The first virtual server specifies the `server_name` as `go.rogueportal`, so it will handle any requests that include this name. For example, `http://go.rogueportal/index.html`. This virtual server serves up the portal content from the `/var/www/html` folder. The Rogue Portal project only includes a simple test `index.html`, but you can add your own content here.
+
+The second virtual server specifies the `server_name` as `_`, which makes it handle requests for any other server name. For example, `http://apple.com`. This virtual server assumes that any request is an attempt to test for an internet connection and it responds with a redirect to the `go.rogueportal` captive portal server.
+
+So, for example, if a device requests `http://apple.com/index.html`, the second virtual server will handle the request and return a redirect to `http://go.rogueportal`. Upon receiving this redirect, the device will then request `http://go.rogueportal` and the first virtual server will serve up the contents of `/var/www/html/index.html`.
+
+In both virtual servers, this line returns an error for any unexpected methods:
 ```text
     if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
 ```
 It's a light security precaution to ensure that someone cannot execute methods we don't expect.
 
-
-This looks for the iOS-specific method of setting the user agent to check for a captive portal and it returns the redirect that iOS expects:
+In the second virtual server, these lines look for the iOS-specific method of setting the user agent to check for a captive portal and it returns the redirect that iOS expects:
 ```text
     if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
-        return 302 http://$host/letsconnect;
+        return 302 http://go.rogueportal;
     }
 ```
-This iOS-specific method might not be strictly necessary since we use a default redirect to catch any unexpected request and redirect it. But I've included it in case you'd like to do something iOS-specific.
+This iOS-specific method might not be strictly necessary since we use a default redirect to catch any unexpected request and redirect it. But I've included it in case you'd like to see how to do something iOS-specific.
 
-The following returns a redirect for requests for *any* content--with one notable exception that I'll explain next:
-```text
-    # Default redirect for any unexpected content to trigger captive portal
-    # sign in screen on device.
-    location / {
-        return 302 http://$host/letsconnect;
-    }
-```
-Note that the redirects send the client to a special `letsconnect` path.
+See the [`nginx` documentation](http://nginx.org/en/docs/) to understand the rest of the settings in this configuration file.
 
-This is our one exception that provides the content for the `letsconnect` path:
-```
-    location /letsconnect {
-        # First attempt to serve request as file, then
-        # as directory, then fall back to displaying a 404.
-        try_files $uri $uri/ =404;
-    }
-```
-We've chosen a unique, but arbitrary path that no known captive portal detection schemes use and we've made this our actual content root. Requests for anything other than this special path will result in a redirect--and it's this redirect that triggers the captive portal detection on devices. The captive portal dialog will then pop up and display the content at the `letsconnect` location returned in the redirect. You could change this path to anything you'd like as long as no captive portal detection schemes are actively looking for it.
-
-#### Test nginx before moving on
+#### Test `nginx` before moving on
 Unless your Raspberry Pi has a secondary, wired network connection, your Raspberry Pi will lose internet access once you complete the rest of the steps, so it's worth ensuring that the web server is up and running first.
 
 ### Create a `wpa_supplicant` configuration to create an access point
@@ -420,7 +431,7 @@ Save and exit (`Ctrl-X`, `y`, `Enter`).
 
 ### Configure iptables to accept DHCP, DNS, and HTTP requests on `wlan0` and reject everything else
 
-We want to limit traffic through `wlan0` to DHCP (so WiFi clients can get an IP address from the Rogue Portal), DNS (so WiFi clients can access the Rogue Portal's DNS server to resolve domain names), and HTTP (so WiFi clients can make HTTP requests to the Rogue Portal's nginx web server), but we don't want to expose services such as SSH. We'll now set up firewall rules for this via `iptables`.
+We want to limit traffic through `wlan0` to DHCP (so WiFi clients can get an IP address from the Rogue Portal), DNS (so WiFi clients can access the Rogue Portal's DNS server to resolve domain names), and HTTP (so WiFi clients can make HTTP requests to the Rogue Portal's `nginx` web server), but we don't want to expose services such as SSH. We'll now set up firewall rules for this via `iptables`.
 
 Begin by opening the `/etc/iptables/rules.v4` file with this command:
 ```bash
@@ -500,18 +511,29 @@ You can completely remove any existing file contents and replace them with this:
 ```text
 listen-address=10.1.1.1
 no-hosts
+log-queries
+log-facility=/var/log/dnsmasq.log
 dhcp-range=10.1.1.2,10.1.1.254,72h
 dhcp-option=option:router,10.1.1.1
 dhcp-authoritative
+dhcp-option=114,http://go.rogueportal/index.html
 
+# Resolve everything to the portal's IP address.
 address=/#/10.1.1.1
 ```
 
 The DHCP lines allow the Raspberry Pi to hand out IP addresses to any devices that connect to its access point, and in turn they will treat the Raspberry Pi as their authoritative gateway to the internet. The "address" line redirects DNS requests for any domain to the Raspberry Pi's IP address. This means that *any* domain name request made by connected WiFi clients will be directed to the Raspberry Pi's IP address. If--for example--a connected client tries to visit http://www.microsoft.com, they'll be directed to the Raspberry Pi's web server.
 
-Note that the only service we've set up thus far is HTTP. So, if a client tries to telnet or SSH to microsoft.com, the request will time out and fail. Or, more importantly, if a client tries to visit https://www.microsoft.com, the request will fail. You could configure nginx to host an HTTPS server on the Raspberry Pi; however, because you (probably) can't spoof certificates for other websites, client web browsers will pop up big security warnings about invalid certificates and try hard to prevent users from proceeding to your Rogue Portal. So, it's probably not worth the effort to bother with HTTPS (this is also another good reason to prefer HTTPS when you're surfing the web).
+Note that the only service we've set up thus far is HTTP. So, if a client tries to telnet or SSH to microsoft.com, the request will time out and fail. Or, more importantly, if a client tries to visit https://www.microsoft.com, the request will fail. You could configure `nginx` to host an HTTPS server on the Raspberry Pi; however, because you (probably) can't spoof certificates for other websites, client web browsers will pop up big security warnings about invalid certificates and try hard to prevent users from proceeding to your Rogue Portal. So, it's probably not worth the effort to bother with HTTPS (this is also another good reason to prefer HTTPS when you're surfing the web).
 
 We only want the DHCP serving and DNS hijacking to happen on the `wlan0` interface. If we have a wired network connection, we want to actually be able to resolve domain names to their real IP addresses so that we can effectively reach the internet from the Raspberry Pi even when the Rogue Portal is active. Therefore, we use that first line to tell `dnsmasq` to listen only on the `wlan0` interface's IP address of 10.1.1.1.
+
+Finally, note this line:
+```text
+dhcp-option=114,http://go.rogueportal/index.html
+```
+
+This takes advantage of the relatively new standard [RFC 8910](https://datatracker.ietf.org/doc/html/rfc8910) that allows a device to more directly discover a captive portal by sending the portal's URI via DHCP as opposed to relying on redirects from the portal. The standard does not have wide adoption yet, but I've included support for it because it will make the captive portal content load faster on devices that do implement it. [Apple supports this feature](https://developer.apple.com/news/?id=q78sq5rv) as of iOS 14 and MacOS Big Sur.
 
 ### Tell `dnsmasq` startup script not to use the loopback interface
 Open the `dnsmasq` defaults file with this command:
