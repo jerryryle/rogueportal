@@ -1,3 +1,17 @@
+rogueportal (1.3) buster; urgency=medium
+
+  * Added support for RFC 8910 (https://datatracker.ietf.org/doc/html/rfc8910)
+    captive portal detection.
+  * Added support for the go.rogueportal domain name and set this as the name
+    used for the RFC 8910 captive portal URI. Also made this the redirect target
+    for systems not supporting RFC 8910.
+  * Changed nginx configuration to differentiate between a captive portal 
+    request and other requests by whether the request includes the server name
+    go.rogueportal. Removed the /letsconnect folder because it is no longer
+    used to differentiate the requests.
+
+ -- Jerry Ryle <jerry@ryle.io>  Thu, 15 May 2021 17:00:00 -0800
+
 rogueportal (1.2) buster; urgency=medium
 
   * Updated configuration to use dhcpcd instead of /etc/network/interfaces

@@ -1,8 +1,9 @@
-# Default server configuration
-#
+# The go.rogueportal server
+# This handles any request that includes go.rogueportal as the server name.
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+    listen 80;
+    listen [::]:80;
+    server_name go.rogueportal;
 
     # Only allow GET, HEAD, POST
     if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
@@ -15,25 +16,39 @@ server {
 
     index index.html;
 
-    server_name _;
-
-    # Handle iOS
-    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
-        return 302 http://$host/letsconnect;
-    }
-
-    # Default redirect for any unexpected content to trigger captive portal
-    # sign in screen on device.
     location / {
-        return 302 http://$host/letsconnect;
-    }
-
-    location /letsconnect {
         # First attempt to serve request as file, then
         # as directory, then fall back to displaying a 404.
         try_files $uri $uri/ =404;
     }
 
     # Redirect these errors to the home page.
-    error_page 401 403 404 =200 /letsconnect/index.html;
+    error_page 401 403 404 =200 /index.html;
+}
+
+# Default server configuration
+# This handles any request not made using the go.rogueportal server name and
+# serves a redirect to go.rogueportal.
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    # Only allow GET, HEAD, POST
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+
+    # Logs
+    access_log /var/log/nginx/rogueportal_redirect.access.log;
+    error_log /var/log/nginx/rogueportal_redirect.error.log warn;
+
+    # Handle iOS
+    if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
+        return 302 http://go.rogueportal;
+    }
+
+    # Default redirect for any unexpected requests to trigger captive portal
+    # sign in screen on device.
+    location / {
+        return 302 http://go.rogueportal;
+    }
 }
