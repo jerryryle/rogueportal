@@ -2,7 +2,7 @@
 title: "Rogue Captive Portal using a Raspberry Pi"
 ---
 # Building a Rogue Captive Portal with the Raspberry Pi
-May 14, 2021 - Update: Rogue Portal can now run on `wlan0` while coexisting with other networks. Tested with WiFi and wired Ethernet on Raspberry Pi Zero W and Raspberry Pi 3 B+.
+Mar 23, 2023 - Update: Rogue Portal has now been tested and confirmed working with Raspberry Pi OS based on Debian version: 11 (bullseye).
 
 I previously created a "Rogue Access Point" ([see project here](https://jerryryle.github.io/rogue_ap/)) that made a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/) act as a WiFi hotspot and serve up a Python web app to anyone who connected to it. That implementation specifically attempted to fool captive portal detection on devices so that they wouldn't pop up a captive portal connection dialog after connecting to the WiFi access point. It would then route all traffic to the Python web app so that when a user attempted to visit a website (for example, http://google.com) they would see the app instead.
 
@@ -42,17 +42,27 @@ You will likely want the following:
 If using a Raspberry Pi Zero, you will also likely want Mini HDMI and micro USB OTG adapters and 2A AC adapter for power ([kits like this](https://www.amazon.com/Vilros-Raspberry-Starter-Power-Premium/dp/B0748MBFTS) contain a Raspberry Pi Zero W along with the cable adapters and power adapters you'll need)
 
 ### Create a Raspberry Pi OS SD Card
-First, you need to get the Raspberry Pi up and running with the required packages. Download the latest image of Raspberry Pi OS Buster Lite from [https://www.raspberrypi.org/software/operating-systems/](https://www.raspberrypi.org/software/operating-systems/)
+First, you need to get the Raspberry Pi up and running with a stock Raspberry Pi OS Linux distribution. Raspberry Pi has made this easy with their Raspberry Pi Imager software. Begin by downloading that software here: [https://www.raspberrypi.com/software](https://www.raspberrypi.com/software/)
 
-For writing the image to your SD card, get Etcher from [https://www.balena.io/etcher/](https://www.balena.io/etcher/).
+Insert the SD card in your computer's reader and run the Raspberry Pi Imager.
 
-Insert the SD card in your computer and use Etcher to copy the Raspberry Pi OS image to the SD card (it will overwrite any data currently on the card).
+![Screenshot of the Raspberry Pi Imager](rpi-imager-screenshot-01.png)
 
-![Etcher screenshot](etcher_screenshot.png)
+Click the "CHOOSE OS" button and select your desired Raspberry Pi OS. I recommend "Raspberry Pi OS Lite (32-bit)," which you'll find under the "Raspberry Pi OS (other)" menu. I recommend the 32-bit version because it works on older models of Raspberry Pi hardware that don't have 64-bit support. Additionally, I only provide pre-built packages for the 32-bit version. If you want 64-bit support, you'll need to follow my instructions in this document for building the packages yourself.
 
-When Etcher has finished copying the image, remove the SD card from your computer, plug it into the Raspberry Pi, connect a keyboard and monitor, and plug in the AC adapter. The system should boot to a login prompt. Log in using the default username `pi` and password `raspberry`.
+Once you've chosen your OS, a gear icon will appear. From here, you can pre-configure some aspects of the OS. 
+
+![Screenshot of the Raspberry Pi Imager with Gear Icon](rpi-imager-screenshot-02.png)
+
+![Screenshot of the Raspberry Pi Imager Advanced Options Menu](rpi-imager-screenshot-03.png)
+
+This is extremely handy. I recommend enabling SSH, choosing a username and password, and setting up WiFi.
+
+When you're ready to create your SD card, click the "WRITE" button. When the Raspberry Pi Imager has finished writing the image, remove the SD card from your computer, plug it into the Raspberry Pi, connect a keyboard and monitor, and plug in the AC adapter. The system should boot to a login prompt. If you did not configure your own username/password, log in using the default username `pi` and password `raspberry`.
 
 ### Set up a WiFi connection for internet access
+If you configured WiFi using the Raspberry Pi Imager and it seems to be working, you can skip this entire section!
+
 In order to update and configure the device, you'll want an internet connection so that you can upgrade Raspberry Pi OS and download the necessary, additional packages. If you have a Raspberry Pi model with wired Ethernet, you can use that and skip this step. Otherwise, you'll need to configure the Raspberry Pi to connect to your WiFi network. You can either run `sudo raspi-config` and configure your network from the GUI or do it manually with the following steps.
 
 Open the wireless configuration with this command:
@@ -80,7 +90,9 @@ sudo service networking restart
 At this point, you might wish to enable ssh and perform as much of the the remaining configuration as possible over ssh. Setting this up is outside the scope of this document, but check out the "Interfacing Options" menu in the configuration tool invoked with `sudo raspi-config`. You can also enable SSH by creating an empty file called "SSH" in the root of the "boot" partition after you have prepared your Rasberry Pi OS SD Card.
 
 ### Update Raspberry Pi OS
-Next, update the system with the following command:
+This step is optional, but recommended to ensure you have the latest security patches. The base Raspberry Pi OS images used to create your SD card quickly go out of date and there are usually a number of updates to apply.
+
+Update the system with the following command:
 ```bash
 sudo apt update && sudo apt dist-upgrade -y
 ```
@@ -97,16 +109,17 @@ There are three paths you can take from here:
 2. You can build and deploy the Debian packages from source if you're interested in getting set up with a development environment that lets you build your own packages with custom content or customized configuration changes.
 3. You can manually create the Rogue Portal if you're interested in understanding the details of what is needed to create one.
 
-You can scroll back up to the [TOC](#table-of-contents) to quickly find each.
+You can scroll back up to the [TOC](#table-of-contents) to quickly find the sections for each of these paths.
 
 ## Deploy the pre-built Debian packages
 This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
 
 ### Download the packages
+(TODO: update these links)
 From your home folder, run the following to fetch the latest release packages:
 ```bash
-wget https://github.com/jerryryle/rogueportal/releases/download/v1.3-RaspbianBuster/rogueportal_1.3_armhf.deb
-wget https://github.com/jerryryle/rogueportal/releases/download/v1.3-RaspbianBuster/roguefastboot_1.3_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.4/rogueportal_1.4_armhf.deb
+wget https://github.com/jerryryle/rogueportal/releases/download/v1.4/roguefastboot_1.4_armhf.deb
 ```
 
 I try to remember to update this documentation with the proper URLs when there are new releases, but you can double-check [the Github project](https://github.com/jerryryle/rogueportal/releases/latest) for the latest version.
@@ -160,12 +173,13 @@ This section will show you how to build the Debian packages from source and then
 ### Install additional dependencies
 Install the additional required packages:
 ```bash
-sudo apt install git debhelper config-package-dev
+sudo apt install git build-essential debhelper config-package-dev
 ```
 
 Here's what you're installing and why:
 
 * **git** - This is needed to clone the repository that contains setup scripts and configuration files.
+* **build-essential** - This includes packages needed to compile software and build Debian packages.
 * **debhelper** - This includes tools for building Debian packages. You'll need this to build the Rogue Portal package.
 * **config-package-dev** - This includes tools that allow our Debian package to replace configuration files that were provided by other packages. These tools will allow us to easily revert the changes when our package is removed. You'll need this to build the Rogue Portal package.
 
@@ -181,11 +195,13 @@ Assuming you'd like to build custom packages for your own deployment, now is whe
 For example, to add your own HTML or media, drop the files into `./rogueportal/files/var/www/html/`. The configuration currently expects this folder to contains an "index.html" so you must either provide this file--overwriting the one that's included in the source--or change the `nginx` configuration to expect differently, which is outside the scope of this document.
 
 ### Build the Packages
-Still from your home folder, build with the following commmand:
+Still from your home folder, build with the following command:
 ```bash
-(cd rogueportal && dpkg-buildpackage -uc -us)
+(cd rogueportal && dpkg-buildpackage --no-sign)
 ```
 The parentheses spawn a subshell so that the directory change is temporary. We do this because the build places the output up outside of the source folder, so this will save us from switching into the source folder to build and then back out to install the packages.
+
+The `-no-sign` switch specifies that we don't want to sign the packages. I do this to avoid documenting how to set up and manage signing keys, which is a complex topic that I'd like to keep out of scope.
 
 ### Install the packages
 Use the following to set configuration options for the `macchanger` and `iptables-persistent` packages (you can skip this step, but then you must select "yes" for each of these options when prompted during installation):
@@ -226,7 +242,7 @@ sudo apt autoremove
 ```
 
 ## Manually create the Rogue Portal
-This section will show you how to manually configure Rasbian to be a Rogue Portal without using the Debian packages. It primarily serves to document the configuration that the Debian packages do.
+This section will show you how to manually configure Raspberry Pi OS to be a Rogue Portal without using the Debian packages. It primarily serves to document the configuration that the Debian packages do.
 
 ### A brief explanation of how the Rogue Portal works
 After connecting to a new WiFi network, a device will first request a specific "known good" test URL to see if it can reach the internet. If it gets the response its expecting, it will infer that it is connected to the internet and do nothing.
@@ -261,7 +277,7 @@ When the installation finishes, restart the Raspberry Pi:
 sudo reboot
 ```
 
-### Configure the Web Server to serve your content
+### Configure the Web Server to serve the captive portal redirects and your content
 Open the default `nginx` site configuration with the following:
 ```bash
 sudo nano /etc/nginx/sites-available/default
@@ -269,34 +285,6 @@ sudo nano /etc/nginx/sites-available/default
 
 Change it to the following content:
 ```text
-# The go.rogueportal server
-# This handles any request that includes go.rogueportal as the server name.
-server {
-    listen 80;
-    listen [::]:80;
-    server_name go.rogueportal;
-
-    # Only allow GET, HEAD, POST
-    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
-
-    # Logs
-    access_log /var/log/nginx/rogueportal.access.log;
-    error_log /var/log/nginx/rogueportal.error.log warn;
-
-    root /var/www/html;
-
-    index index.html;
-
-    location / {
-        # First attempt to serve request as file, then
-        # as directory, then fall back to displaying a 404.
-        try_files $uri $uri/ =404;
-    }
-
-    # Redirect these errors to the home page.
-    error_page 401 403 404 =200 /index.html;
-}
-
 # Default server configuration
 # This handles any request not made using the go.rogueportal server name and
 # serves a redirect to go.rogueportal.
@@ -325,18 +313,61 @@ server {
 }
 ```
 
+Create a new `nginx` site configuration with the following:
+```bash
+sudo nano /etc/nginx/sites-available/roguecontent
+```
+
+Add the following content:
+```text
+# The go.rogueportal server
+# This handles any request that includes go.rogueportal as the server name.
+# You can update this to serve your own content, proxy to another server, etc.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name go.rogueportal;
+
+    # Only allow GET, HEAD, POST
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+
+    # Logs
+    access_log /var/log/nginx/rogueportal.access.log;
+    error_log /var/log/nginx/rogueportal.error.log warn;
+
+    root /var/www/html;
+
+    index index.html;
+
+    location / {
+        # First attempt to serve request as file, then
+        # as directory, then fall back to displaying a 404.
+        try_files $uri $uri/ =404;
+    }
+
+    # Redirect these errors to the home page.
+    error_page 401 403 404 =200 /index.html;
+}
+```
+
+Activate the new content site with:
+```bash
+sudo ln -s ln -s /etc/nginx/sites-available/roguecontent /etc/nginx/sites-enabled/roguecontent
+```
+
+
 #### Explanation of what's added
 This section briefly outlines the important additions to this file.
 
-I've arbitrarily chosen `go.rogueportal` as the server name for the Rogue Portal. You can change this if you'd like; however, you'll want to search through all of the projects files as you'll need to replace it in several locations. You can choose any name you like, but it should not be a name that is used by any captive portal detection scheme (e.g. using a real domain such as "apple.com" would be a bad choice because vendors may use their own domains to try to detect captive portals).
+I've arbitrarily chosen `go.rogueportal` as the server name for the Rogue Portal. You can change this if you'd like; however, you'll want to search through all of the projects files as you'll need to replace it in several locations. You can choose any name you like, but it should not be a name that is used by any captive portal detection scheme. For example, using a real domain such as "apple.com" would be a bad choice because device vendors, like Apple, may use their own domains to try to detect captive portals. If you use their domain in your Rogue Portal, you may confuse devices or trigger a security warning on them.
 
 The Rogue Portal uses the server name to determine whether a client is attempting to test the internet connection or whether the client is attempting to display captive portal content.
 
-The `nginx` configuration sets up two virtual servers, both listening on port 80. The first virtual server specifies the `server_name` as `go.rogueportal`, so it will handle any requests that include this name. For example, `http://go.rogueportal/index.html`. This virtual server serves up the portal content from the `/var/www/html` folder. The Rogue Portal project only includes a simple test `index.html`, but you can add your own content here.
+The `nginx` configuration sets up two virtual servers, both listening on port 80. The virtual server in `roguecontent` specifies the `server_name` as `go.rogueportal`, so it will handle any requests that include this name. For example, `http://go.rogueportal/index.html`. This virtual server serves up the portal content from the `/var/www/html` folder. The Rogue Portal project only includes a simple test `index.html`, but you can add your own content here. The `roguecontent` configuration is intentionally kept in its own file (as opposed to being lumped in the `default` file) so that you can easily update it for different types of content configurations without impacting the captive portal functionality.
 
-The second virtual server specifies the `server_name` as `_`, which makes it handle requests for any other server name. For example, `http://apple.com`. This virtual server assumes that any request is an attempt to test for an internet connection and it responds with a redirect to the `go.rogueportal` captive portal server.
+The virtual server in `default` specifies the `server_name` as `_`, which makes it handle requests for any other server name. For example, `http://apple.com`. This virtual server assumes that any request is an attempt to test for an internet connection and it responds with a redirect to the `go.rogueportal` captive portal server.
 
-So, for example, if a device requests `http://apple.com/index.html`, the second virtual server will handle the request and return a redirect to `http://go.rogueportal`. Upon receiving this redirect, the device will then request `http://go.rogueportal` and the first virtual server will serve up the contents of `/var/www/html/index.html`.
+So, for example, if a device requests `http://apple.com/index.html`, the `default` virtual server will handle the request and return a redirect to `http://go.rogueportal`. Upon receiving this redirect, the device will then request `http://go.rogueportal` and the `roguecontent` virtual server will serve up the contents of `/var/www/html/index.html`.
 
 In both virtual servers, this line returns an error for any unexpected methods:
 ```text
@@ -344,18 +375,18 @@ In both virtual servers, this line returns an error for any unexpected methods:
 ```
 It's a light security precaution to ensure that someone cannot execute methods we don't expect.
 
-In the second virtual server, these lines look for the iOS-specific method of setting the user agent to check for a captive portal and it returns the redirect that iOS expects:
+In the `default` virtual server, these lines look for the iOS-specific method of setting the user agent to check for a captive portal and it returns the redirect that iOS expects:
 ```text
     if ($http_user_agent ~* (CaptiveNetworkSupport) ) {
         return 302 http://go.rogueportal;
     }
 ```
-This iOS-specific method might not be strictly necessary since we use a default redirect to catch any unexpected request and redirect it. But I've included it in case you'd like to see how to do something iOS-specific.
+This iOS-specific method is not be strictly necessary since we use a default redirect to catch any unexpected request and redirect it. But I've included it in case you'd like to see how to do something iOS-specific.
 
-See the [`nginx` documentation](http://nginx.org/en/docs/) to understand the rest of the settings in this configuration file.
+See the [`nginx` documentation](http://nginx.org/en/docs/) to understand the rest of the settings in these configuration files.
 
 #### Test `nginx` before moving on
-Unless your Raspberry Pi has a secondary, wired network connection, your Raspberry Pi will lose internet access once you complete the rest of the steps, so it's worth ensuring that the web server is up and running first.
+Unless your Raspberry Pi has a secondary, wired network connection, your Raspberry Pi will lose internet access once you complete the rest of the steps, so it's worth ensuring that the web server is up and running first. From a browser on a computer or mobile device that's on the same network as your Raspberry Pi, navigate to your Raspberry Pi's IP address using HTTP (e.g. if your Raspberry Pi has IP address 10.0.0.6, go to http://10.0.0.6). If nginx is working, you will see the Rogue Portal's website load. If not, go back and double-check that you followed all steps up to this point correctly.
 
 ### Create a `wpa_supplicant` configuration to create an access point
 Start by creating a configuration file that will tell `wpa_supplicant` to create a wireless access point. Use this command to create a new configuration file:
@@ -522,11 +553,11 @@ dhcp-option=114,http://go.rogueportal/index.html
 address=/#/10.1.1.1
 ```
 
-The DHCP lines allow the Raspberry Pi to hand out IP addresses to any devices that connect to its access point, and in turn they will treat the Raspberry Pi as their authoritative gateway to the internet. The "address" line redirects DNS requests for any domain to the Raspberry Pi's IP address. This means that *any* domain name request made by connected WiFi clients will be directed to the Raspberry Pi's IP address. If--for example--a connected client tries to visit http://www.microsoft.com, they'll be directed to the Raspberry Pi's web server.
+The DHCP lines allow the Raspberry Pi to hand out IP addresses and router (a.k.a. "default gateway") information to any devices that connect to it. These devices will then treat the Raspberry Pi as their authoritative gateway to the internet. The "address" line redirects DNS requests for any domain to the Raspberry Pi's IP address. This means that *any* domain name request made by connected WiFi clients will be directed to the Raspberry Pi's IP address. If--for example--a connected client tries to visit http://www.microsoft.com, they'll be directed to the Raspberry Pi's IP address instead of the actual IP address for www.microsoft.com.
 
 Note that the only service we've set up thus far is HTTP. So, if a client tries to telnet or SSH to microsoft.com, the request will time out and fail. Or, more importantly, if a client tries to visit https://www.microsoft.com, the request will fail. You could configure `nginx` to host an HTTPS server on the Raspberry Pi; however, because you (probably) can't spoof certificates for other websites, client web browsers will pop up big security warnings about invalid certificates and try hard to prevent users from proceeding to your Rogue Portal. So, it's probably not worth the effort to bother with HTTPS (this is also another good reason to prefer HTTPS when you're surfing the web).
 
-We only want the DHCP serving and DNS hijacking to happen on the `wlan0` interface. If we have a wired network connection, we want to actually be able to resolve domain names to their real IP addresses so that we can effectively reach the internet from the Raspberry Pi even when the Rogue Portal is active. Therefore, we use that first line to tell `dnsmasq` to listen only on the `wlan0` interface's IP address of 10.1.1.1.
+We only want the DHCP serving and DNS hijacking to happen on the `wlan0` interface. If we have a wired network connection to the Raspberry Pi that we use for development, we want to actually be able to resolve domain names to their real IP addresses so that we can effectively reach the internet even when the Rogue Portal is active. Therefore, we use that first line to tell `dnsmasq` to listen only on the `wlan0` interface's IP address of 10.1.1.1.
 
 Finally, note this line:
 ```text
@@ -580,6 +611,6 @@ Reboot the Raspberry Pi with this command
 sudo reboot
 ```
 
-Once the Raspberry Pi boots, you should be able to see and connect to an unsecured WiFi access point with the name you selected. Shortly after connecting, your device should prompt you with a captive portal connection dialog that should contain the content from your web server. If it does not, something may have gone wrong with your Raspberry Pi OS configuration or your device's captive portal detection. To begin diagnosing the problem, you can try navigating a web browser to an `http://` url such as http://example.com. If the web server, routing, etc. is configured correctly on the Raspberry Pi, you should see your content.
+Once the Raspberry Pi boots, you should be able to see and connect to the unsecured WiFi access point with the name you selected. Shortly after connecting, your device should prompt you with a captive portal connection dialog that contains the content from your web server. If it does not, something may have gone wrong with your Raspberry Pi OS configuration or your device's captive portal detection. To begin diagnosing the problem, you can try navigating a web browser to an `http://` url such as http://example.com while connected to the access point. If the web server, routing, etc. is configured correctly on the Raspberry Pi, you should see your content. If not, or if you're not even able to see or connect to the WiFi access point, then go back and double-check your configuration. If everything looks correct, it's possible you're using a newer version of Raspberry Pi OS than I've tested and the OS has changed such that my patches no longer work. I'm open to pull requests if you want to try to figure out how to update it. : )
 
 Have fun!

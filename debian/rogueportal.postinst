@@ -33,6 +33,7 @@ case "$1" in
 
 		systemctl enable dnsmasq
 
+        ln -s /etc/nginx/sites-available/roguecontent.rogueportal /etc/nginx/sites-enabled/roguecontent
         service nginx reload
     ;;
 
