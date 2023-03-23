@@ -1,0 +1,28 @@
+# The go.rogueportal server
+# This handles any request that includes go.rogueportal as the server name.
+# You can update this to serve your own content, proxy to another server, etc.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name go.rogueportal;
+
+    # Only allow GET, HEAD, POST
+    if ($request_method !~ ^(GET|HEAD|POST)$) { return 444; }
+
+    # Logs
+    access_log /var/log/nginx/rogueportal.access.log;
+    error_log /var/log/nginx/rogueportal.error.log warn;
+
+    root /var/www/html;
+
+    index index.html;
+
+    location / {
+        # First attempt to serve request as file, then
+        # as directory, then fall back to displaying a 404.
+        try_files $uri $uri/ =404;
+    }
+
+    # Redirect these errors to the home page.
+    error_page 401 403 404 =200 /index.html;
+}
