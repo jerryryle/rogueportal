@@ -115,7 +115,6 @@ You can scroll back up to the [TOC](#table-of-contents) to quickly find the sect
 This section will show you how to deploy the pre-built Debian packages to create the Rogue Portal. Use this method if you just want to get a Rogue Portal up & running quickly and then add your own files to the web server.
 
 ### Download the packages
-(TODO: update these links)
 From your home folder, run the following to fetch the latest release packages:
 ```bash
 wget https://github.com/jerryryle/rogueportal/releases/download/v1.4/rogueportal_1.4_armhf.deb
